@@ -23,6 +23,14 @@ export default () => ({
       keyPath: process.env.WECHAT_PAY_KEY_PATH,
     },
   },
+  wechatPay: {
+    appid: process.env.WECHAT_APPID || '',
+    mchId: process.env.WECHAT_PAY_MCH_ID || '',
+    apiKey: process.env.WECHAT_PAY_API_KEY || '',
+    certPath: process.env.WECHAT_PAY_CERT_PATH || '',
+    keyPath: process.env.WECHAT_PAY_KEY_PATH || '',
+    notifyUrl: process.env.WECHAT_PAY_NOTIFY_URL || 'http://localhost:3000/api/payment/notify',
+  },
   map: {
     provider: process.env.MAP_PROVIDER || 'tencent',
     key: process.env.MAP_KEY,

@@ -241,6 +241,7 @@ model Payment {
   amount         Decimal  @db.Decimal(10, 2)
   payMethod      String
   payStatus      String   @default("pending")
+  outTradeNo     String   @unique
   transactionId  String?
   paidAt         DateTime?
   callbackData   String?
