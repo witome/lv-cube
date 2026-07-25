@@ -33,6 +33,11 @@
     </view>
 
     <view class="menu-section">
+      <view v-if="userStore.isLoggedIn && userStore.currentRole === 'supplier'" class="menu-item" @click="goOrderList">
+        <view class="menu-icon">📋</view>
+        <view class="menu-text">订单管理</view>
+        <view class="menu-arrow">›</view>
+      </view>
       <view v-if="userStore.isLoggedIn && userStore.currentRole === 'supplier'" class="menu-item" @click="goProductList">
         <view class="menu-icon">📦</view>
         <view class="menu-text">商品管理</view>
@@ -110,7 +115,11 @@ function goProductList() {
 }
 
 function goOrderList() {
-  uni.navigateTo({ url: '/pages/order/list' });
+  if (userStore.currentRole === 'supplier') {
+    uni.navigateTo({ url: '/pages/supplier/order-list' });
+  } else {
+    uni.navigateTo({ url: '/pages/order/list' });
+  }
 }
 
 function handlePlaceholder(text: string) {
