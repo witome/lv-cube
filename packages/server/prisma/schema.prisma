@@ -28,6 +28,7 @@ model User {
   supplierOrders Order[]   @relation("SupplierOrders")
   payments      Payment[]
   withdrawals   Withdraw[]
+  userAccount   UserAccount?
   sentMessages  AfterSaleMessage[] @relation("SenderMessages")
 }
 
@@ -251,15 +252,29 @@ model Payment {
   user           User     @relation(fields: [userId], references: [id])
 }
 
+model UserAccount {
+  id             Int      @id @default(autoincrement())
+  userId         Int      @unique
+  balance        Decimal  @db.Decimal(10, 2) @default(0)
+  pendingBalance Decimal  @db.Decimal(10, 2) @default(0)
+  frozenAmount   Decimal  @db.Decimal(10, 2) @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user           User     @relation(fields: [userId], references: [id])
+}
+
 model Settlement {
   id             Int      @id @default(autoincrement())
   orderId        Int      @unique
   supplierId     Int
+  driverId       Int?
   orderAmount    Decimal  @db.Decimal(10, 2)
   commissionRate Decimal  @db.Decimal(5, 4)
-  commissionFee  Decimal  @db.Decimal(10, 2)
-  settleAmount   Decimal  @db.Decimal(10, 2)
-  settleStatus   String   @default("pending")
+  commissionAmount Decimal  @db.Decimal(10, 2)
+  supplierAmount Decimal  @db.Decimal(10, 2)
+  driverAmount   Decimal  @db.Decimal(10, 2) @default(0)
+  status         String   @default("pending")
   settledAt      DateTime?
   createdAt      DateTime @default(now())
 
@@ -271,9 +286,10 @@ model Withdraw {
   userId        Int
   role          String
   amount        Decimal  @db.Decimal(10, 2)
-  bankAccount   String
-  auditStatus   String   @default("pending")
-  auditRemark   String?
+  fee           Decimal  @db.Decimal(10, 2) @default(0)
+  actualAmount  Decimal  @db.Decimal(10, 2)
+  status        String   @default("pending")
+  withdrawMethod String  @default("wechat")
   paidAt        DateTime?
   createdAt     DateTime @default(now())
 
