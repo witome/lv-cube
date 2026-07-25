@@ -73,6 +73,12 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/finance/withdrawal.vue'),
         meta: { title: '提现审核' },
       },
+      {
+        path: 'delivery/list',
+        name: 'DeliveryList',
+        component: () => import('@/views/delivery/list.vue'),
+        meta: { title: '配送任务' },
+      },
     ],
   },
 ];

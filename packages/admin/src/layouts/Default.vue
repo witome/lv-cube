@@ -28,6 +28,10 @@
           <el-menu-item index="/finance/settlement"><el-icon><List /></el-icon>结算记录</el-menu-item>
           <el-menu-item index="/finance/withdrawal"><el-icon><List /></el-icon>提现审核</el-menu-item>
         </el-sub-menu>
+        <el-sub-menu index="delivery">
+          <template #title><el-icon><Van /></el-icon><span>配送管理</span></template>
+          <el-menu-item index="/delivery/list"><el-icon><List /></el-icon>配送任务</el-menu-item>
+        </el-sub-menu>
       </el-menu>
     </el-aside>
     <el-container>
