@@ -61,6 +61,18 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/order/list.vue'),
         meta: { title: '订单列表' },
       },
+      {
+        path: 'finance/settlement',
+        name: 'SettlementList',
+        component: () => import('@/views/finance/settlement.vue'),
+        meta: { title: '结算记录' },
+      },
+      {
+        path: 'finance/withdrawal',
+        name: 'WithdrawalReview',
+        component: () => import('@/views/finance/withdrawal.vue'),
+        meta: { title: '提现审核' },
+      },
     ],
   },
 ];

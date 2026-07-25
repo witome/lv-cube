@@ -23,6 +23,11 @@
           <template #title><el-icon><Document /></el-icon><span>订单管理</span></template>
           <el-menu-item index="/order/list"><el-icon><List /></el-icon>订单列表</el-menu-item>
         </el-sub-menu>
+        <el-sub-menu index="finance">
+          <template #title><el-icon><Money /></el-icon><span>财务管理</span></template>
+          <el-menu-item index="/finance/settlement"><el-icon><List /></el-icon>结算记录</el-menu-item>
+          <el-menu-item index="/finance/withdrawal"><el-icon><List /></el-icon>提现审核</el-menu-item>
+        </el-sub-menu>
       </el-menu>
     </el-aside>
     <el-container>
