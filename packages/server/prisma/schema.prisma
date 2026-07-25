@@ -49,6 +49,7 @@ model SupplierProfile {
   user              User     @relation(fields: [userId], references: [id])
   products          Product[]
   ownedDrivers      OwnedDriver[]
+  deliveries        Delivery[]
 }
 
 model DriverProfile {
@@ -206,6 +207,7 @@ model Order {
   cancelReason        String?
   paidAt              DateTime?
   acceptedAt          DateTime?
+  shippedAt           DateTime?
   deliveredAt         DateTime?
   receivedAt          DateTime?
   completedAt         DateTime?
@@ -217,7 +219,7 @@ model Order {
   items               OrderItem[]
   payments            Payment[]
   settlement          Settlement?
-  deliveries          Delivery[]
+  delivery            Delivery?
   afterSales          AfterSale[]
 }
 
@@ -298,26 +300,28 @@ model Withdraw {
 
 model Delivery {
   id                      Int      @id @default(autoincrement())
-  orderId                 Int
+  orderId                 Int      @unique
+  supplierId              Int
   driverId                Int?
-  deliveryType            String
+  type                    String
   pickupAddress           String
   deliveryAddress         String
-  distance                Float
-  deliveryFee             Decimal  @db.Decimal(10, 2)
+  distance                Float?
+  deliveryFee             Decimal  @db.Decimal(10, 2) @default(0)
   status                  String
   driverLatitude          Float?
   driverLongitude         Float?
   driverLocationUpdatedAt DateTime?
   expectedArrivalTime     DateTime?
   acceptedAt              DateTime?
-  pickedAt                DateTime?
+  pickedUpAt              DateTime?
   deliveredAt             DateTime?
   signedAt                DateTime?
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 
   order                   Order    @relation(fields: [orderId], references: [id])
+  supplier                SupplierProfile @relation(fields: [supplierId], references: [id])
   driver                  DriverProfile? @relation(fields: [driverId], references: [id])
 }
 
