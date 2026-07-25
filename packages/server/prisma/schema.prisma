@@ -126,6 +126,7 @@ model Product {
   subtitle    String?
   mainImages  String   @default("[]")
   description String?
+  attrValues  String?
   status      String   @default("off")
   salesCount  Int      @default(0)
   createdAt   DateTime @default(now())
