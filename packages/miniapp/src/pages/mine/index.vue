@@ -53,6 +53,11 @@
         <view class="menu-text">司机入驻</view>
         <view class="menu-arrow">›</view>
       </view>
+      <view v-if="userStore.isLoggedIn && (userStore.currentRole === 'supplier' || userStore.currentRole === 'driver')" class="menu-item" @click="goSettlement">
+        <view class="menu-icon">💰</view>
+        <view class="menu-text">我的钱包</view>
+        <view class="menu-arrow">›</view>
+      </view>
       <view class="menu-item" @click="goAddress">
         <view class="menu-icon">📍</view>
         <view class="menu-text">地址管理</view>
@@ -108,6 +113,10 @@ function goApply(type: string) {
 
 function goAddress() {
   uni.navigateTo({ url: '/pages/address/list' });
+}
+
+function goSettlement() {
+  uni.navigateTo({ url: '/pages/settlement/index' });
 }
 
 function goProductList() {

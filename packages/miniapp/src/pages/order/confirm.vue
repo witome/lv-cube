@@ -220,11 +220,16 @@ async function handleSubmit() {
         quantity: item.quantity,
       })),
     };
-    const result = await createOrder(data);
+    const result: any = await createOrder(data);
     uni.hideLoading();
     uni.showToast({ title: '下单成功', icon: 'success' });
+    const orderId = result?.id || result?.orderId;
     setTimeout(() => {
-      uni.redirectTo({ url: '/pages/order/list' });
+      if (orderId) {
+        uni.redirectTo({ url: `/pages/payment/index?orderId=${orderId}` });
+      } else {
+        uni.redirectTo({ url: '/pages/order/list' });
+      }
     }, 1500);
   } catch (e) {
     uni.hideLoading();
