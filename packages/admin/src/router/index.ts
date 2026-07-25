@@ -74,6 +74,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '提现审核' },
       },
       {
+        path: 'refund/list',
+        name: 'RefundList',
+        component: () => import('@/views/refund/list.vue'),
+        meta: { title: '退款管理' },
+      },
+      {
         path: 'delivery/list',
         name: 'DeliveryList',
         component: () => import('@/views/delivery/list.vue'),

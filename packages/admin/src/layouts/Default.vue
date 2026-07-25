@@ -27,6 +27,7 @@
           <template #title><el-icon><Money /></el-icon><span>财务管理</span></template>
           <el-menu-item index="/finance/settlement"><el-icon><List /></el-icon>结算记录</el-menu-item>
           <el-menu-item index="/finance/withdrawal"><el-icon><List /></el-icon>提现审核</el-menu-item>
+          <el-menu-item index="/refund/list"><el-icon><List /></el-icon>退款管理</el-menu-item>
         </el-sub-menu>
         <el-sub-menu index="delivery">
           <template #title><el-icon><Van /></el-icon><span>配送管理</span></template>
