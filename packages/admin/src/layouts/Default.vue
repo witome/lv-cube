@@ -19,6 +19,10 @@
           <el-menu-item index="/category/attr-template"><el-icon><SetUp /></el-icon>属性模板</el-menu-item>
           <el-menu-item index="/product/list"><el-icon><List /></el-icon>商品列表</el-menu-item>
         </el-sub-menu>
+        <el-sub-menu index="order">
+          <template #title><el-icon><Document /></el-icon><span>订单管理</span></template>
+          <el-menu-item index="/order/list"><el-icon><List /></el-icon>订单列表</el-menu-item>
+        </el-sub-menu>
       </el-menu>
     </el-aside>
     <el-container>
