@@ -135,6 +135,7 @@ model Product {
   supplier    SupplierProfile @relation(fields: [supplierId], references: [id])
   category    Category        @relation(fields: [categoryId], references: [id])
   skus        ProductSku[]
+  cartItems   CartItem[]
   reviews     ProductReview[]
 }
 
@@ -151,6 +152,24 @@ model ProductSku {
   updatedAt     DateTime @updatedAt
 
   product       Product  @relation(fields: [productId], references: [id])
+  cartItems     CartItem[]
+}
+
+model CartItem {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  supplierId Int
+  productId  Int
+  skuId      Int
+  quantity   Int
+  price      Decimal  @db.Decimal(10, 2)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  product    Product  @relation(fields: [productId], references: [id])
+  sku        ProductSku @relation(fields: [skuId], references: [id])
+
+  @@unique([userId, productId, skuId])
 }
 
 model ProductReview {
