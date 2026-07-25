@@ -1,0 +1,334 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int      @id @default(autoincrement())
+  phone         String   @unique
+  nickname      String
+  avatar        String?
+  wechatOpenid  String?  @unique
+  roles         String   @default("buyer")
+  realName      String?
+  idCardNo      String?
+  status        String   @default("active")
+  passwordHash  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  supplier      SupplierProfile?
+  driver        DriverProfile?
+  addresses     Address[]
+  buyerOrders   Order[]    @relation("BuyerOrders")
+  supplierOrders Order[]   @relation("SupplierOrders")
+  payments      Payment[]
+  withdrawals   Withdraw[]
+  sentMessages  AfterSaleMessage[] @relation("SenderMessages")
+}
+
+model SupplierProfile {
+  id                Int      @id @default(autoincrement())
+  userId            Int      @unique
+  shopName          String
+  shopLogo          String?
+  shopDesc          String?
+  businessLicense   String
+  foodLicense       String?
+  auditStatus       String   @default("pending")
+  auditRemark       String?
+  auditAt           DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user              User     @relation(fields: [userId], references: [id])
+  products          Product[]
+  ownedDrivers      OwnedDriver[]
+}
+
+model DriverProfile {
+  id                Int      @id @default(autoincrement())
+  userId            Int      @unique
+  driverName        String
+  licenseNo         String
+  vehiclePlate      String   @unique
+  vehicleType       String
+  capacity          Float
+  auditStatus       String   @default("pending")
+  auditRemark       String?
+  auditAt           DateTime?
+  status            String   @default("offline")
+  latitude          Float?
+  longitude         Float?
+  locationUpdatedAt DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user              User     @relation(fields: [userId], references: [id])
+  deliveries        Delivery[]
+}
+
+model OwnedDriver {
+  id          Int      @id @default(autoincrement())
+  supplierId  Int
+  name        String
+  phone       String
+  vehiclePlate String
+  status      String   @default("active")
+  createdAt   DateTime @default(now())
+
+  supplier    SupplierProfile @relation(fields: [supplierId], references: [id])
+}
+
+model Address {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  type       String
+  name       String
+  phone      String
+  province   String
+  city       String
+  district   String
+  detail     String
+  isDefault  Boolean  @default(false)
+  latitude   Float?
+  longitude  Float?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user       User     @relation(fields: [userId], references: [id])
+}
+
+model Category {
+  id            Int      @id @default(autoincrement())
+  parentId      Int?
+  name          String
+  level         Int
+  sort          Int      @default(0)
+  icon          String?
+  attrTemplate  String   @default("[]")
+  status        String   @default("active")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  products      Product[]
+}
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  supplierId  Int
+  categoryId  Int
+  name        String
+  subtitle    String?
+  mainImages  String   @default("[]")
+  description String?
+  status      String   @default("off")
+  salesCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  supplier    SupplierProfile @relation(fields: [supplierId], references: [id])
+  category    Category        @relation(fields: [categoryId], references: [id])
+  skus        ProductSku[]
+  reviews     ProductReview[]
+}
+
+model ProductSku {
+  id            Int      @id @default(autoincrement())
+  productId     Int
+  skuName       String
+  price         Decimal  @db.Decimal(10, 2)
+  originalPrice Decimal? @db.Decimal(10, 2)
+  stock         Int
+  weight        Float?
+  specValues    String   @default("{}")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  product       Product  @relation(fields: [productId], references: [id])
+}
+
+model ProductReview {
+  id          Int      @id @default(autoincrement())
+  orderItemId Int
+  userId      Int
+  productId   Int
+  rating      Int
+  content     String?
+  images      String?
+  createdAt   DateTime @default(now())
+
+  product     Product  @relation(fields: [productId], references: [id])
+}
+
+model Order {
+  id                  Int      @id @default(autoincrement())
+  orderNo             String   @unique
+  buyerId             Int
+  supplierId          Int
+  addressSnapshot     String
+  deliveryType        String
+  deliveryTimeSlot    String?
+  deliveryFee         Decimal  @db.Decimal(10, 2) @default(0)
+  goodsAmount         Decimal  @db.Decimal(10, 2) @default(0)
+  discountAmount      Decimal  @db.Decimal(10, 2) @default(0)
+  totalAmount         Decimal  @db.Decimal(10, 2) @default(0)
+  payAmount           Decimal  @db.Decimal(10, 2) @default(0)
+  commissionRate      Decimal  @db.Decimal(5, 4) @default(0.03)
+  commissionFee       Decimal  @db.Decimal(10, 2) @default(0)
+  status              String
+  remark              String?
+  cancelReason        String?
+  paidAt              DateTime?
+  acceptedAt          DateTime?
+  deliveredAt         DateTime?
+  receivedAt          DateTime?
+  completedAt         DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  buyer               User     @relation("BuyerOrders", fields: [buyerId], references: [id])
+  supplier            User     @relation("SupplierOrders", fields: [supplierId], references: [id])
+  items               OrderItem[]
+  payments            Payment[]
+  settlement          Settlement?
+  deliveries          Delivery[]
+  afterSales          AfterSale[]
+}
+
+model OrderItem {
+  id               Int      @id @default(autoincrement())
+  orderId          Int
+  productId        Int
+  productSnapshot  String
+  skuId            Int
+  quantity         Int
+  price            Decimal  @db.Decimal(10, 2)
+  subtotal         Decimal  @db.Decimal(10, 2)
+  createdAt        DateTime @default(now())
+
+  order            Order    @relation(fields: [orderId], references: [id])
+}
+
+model Payment {
+  id             Int      @id @default(autoincrement())
+  orderId        Int
+  userId         Int
+  amount         Decimal  @db.Decimal(10, 2)
+  payMethod      String
+  payStatus      String   @default("pending")
+  transactionId  String?
+  paidAt         DateTime?
+  callbackData   String?
+  createdAt      DateTime @default(now())
+
+  order          Order    @relation(fields: [orderId], references: [id])
+  user           User     @relation(fields: [userId], references: [id])
+}
+
+model Settlement {
+  id             Int      @id @default(autoincrement())
+  orderId        Int      @unique
+  supplierId     Int
+  orderAmount    Decimal  @db.Decimal(10, 2)
+  commissionRate Decimal  @db.Decimal(5, 4)
+  commissionFee  Decimal  @db.Decimal(10, 2)
+  settleAmount   Decimal  @db.Decimal(10, 2)
+  settleStatus   String   @default("pending")
+  settledAt      DateTime?
+  createdAt      DateTime @default(now())
+
+  order          Order    @relation(fields: [orderId], references: [id])
+}
+
+model Withdraw {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  role          String
+  amount        Decimal  @db.Decimal(10, 2)
+  bankAccount   String
+  auditStatus   String   @default("pending")
+  auditRemark   String?
+  paidAt        DateTime?
+  createdAt     DateTime @default(now())
+
+  user          User     @relation(fields: [userId], references: [id])
+}
+
+model Delivery {
+  id                      Int      @id @default(autoincrement())
+  orderId                 Int
+  driverId                Int?
+  deliveryType            String
+  pickupAddress           String
+  deliveryAddress         String
+  distance                Float
+  deliveryFee             Decimal  @db.Decimal(10, 2)
+  status                  String
+  driverLatitude          Float?
+  driverLongitude         Float?
+  driverLocationUpdatedAt DateTime?
+  expectedArrivalTime     DateTime?
+  acceptedAt              DateTime?
+  pickedAt                DateTime?
+  deliveredAt             DateTime?
+  signedAt                DateTime?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  order                   Order    @relation(fields: [orderId], references: [id])
+  driver                  DriverProfile? @relation(fields: [driverId], references: [id])
+}
+
+model DeliveryConfig {
+  id                   Int      @id @default(autoincrement())
+  city                 String   @unique
+  baseFee              Decimal  @db.Decimal(10, 2)
+  baseDistance         Float
+  perKmFee             Decimal  @db.Decimal(10, 2)
+  freeDeliveryThreshold Decimal @db.Decimal(10, 2) @default(0)
+  sameDayFeeExtra      Decimal  @db.Decimal(10, 2) @default(0)
+  nextDayFeeExtra      Decimal  @db.Decimal(10, 2) @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model AfterSale {
+  id                       Int      @id @default(autoincrement())
+  orderId                  Int
+  buyerId                  Int
+  supplierId               Int
+  type                     String
+  reason                   String
+  description              String?
+  images                   String   @default("[]")
+  status                   String
+  buyerRefundAmount        Decimal? @db.Decimal(10, 2)
+  supplierCompensationAmount Decimal? @db.Decimal(10, 2)
+  platformDecision         String?
+  decisionRemark           String?
+  appliedAt                DateTime @default(now())
+  supplierProcessedAt      DateTime?
+  arbitratedAt             DateTime?
+  closedAt                 DateTime?
+
+  order                    Order    @relation(fields: [orderId], references: [id])
+  messages                 AfterSaleMessage[]
+}
+
+model AfterSaleMessage {
+  id          Int      @id @default(autoincrement())
+  afterSaleId Int
+  senderId    Int
+  senderRole  String
+  content     String
+  images      String?
+  createdAt   DateTime @default(now())
+
+  afterSale   AfterSale @relation(fields: [afterSaleId], references: [id])
+  sender      User      @relation("SenderMessages", fields: [senderId], references: [id])
+}

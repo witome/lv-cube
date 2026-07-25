@@ -1,0 +1,94 @@
+<h2>绿立方农批交易平台 - 系统架构设计</h2>
+<p class="subtitle">技术栈：uni-app (Vue3+TS) + NestJS (Node.js+TS) + MySQL + Redis</p>
+
+<div style="margin-top: 24px;">
+  <h3>🏗️ 整体分层架构</h3>
+  <div style="display: flex; flex-direction: column; gap: 8px; max-width: 600px; margin-top: 16px;">
+    
+    <div style="padding: 16px; background: #e3f2fd; border-radius: 8px; border: 2px solid #1976d2; text-align: center;">
+      <strong>🌐 客户端层</strong><br>
+      <span style="font-size: 13px;">微信小程序（买家/供应商/司机 三端合一） + 运营管理 H5 后台</span>
+    </div>
+    
+    <div style="text-align: center; color: #999;">▼ HTTP / WebSocket</div>
+    
+    <div style="padding: 16px; background: #e8f5e9; border-radius: 8px; border: 2px solid #388e3c; text-align: center;">
+      <strong>🚀 API 网关层 (NestJS)</strong><br>
+      <span style="font-size: 13px;">统一鉴权、路由分发、限流、日志</span>
+    </div>
+    
+    <div style="text-align: center; color: #999;">▼ 内部模块调用</div>
+    
+    <div style="padding: 16px; background: #fff3e0; border-radius: 8px; border: 2px solid #f57c00;">
+      <strong>⚙️ 业务服务层 (NestJS Modules)</strong>
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px;">
+        <div style="background: white; padding: 8px; border-radius: 4px; text-align: center;">用户模块</div>
+        <div style="background: white; padding: 8px; border-radius: 4px; text-align: center;">商品模块</div>
+        <div style="background: white; padding: 8px; border-radius: 4px; text-align: center;">订单模块</div>
+        <div style="background: white; padding: 8px; border-radius: 4px; text-align: center;">支付模块</div>
+        <div style="background: white; padding: 8px; border-radius: 4px; text-align: center;">配送模块</div>
+        <div style="background: white; padding: 8px; border-radius: 4px; text-align: center;">结算模块</div>
+        <div style="background: white; padding: 8px; border-radius: 4px; text-align: center;">售后模块</div>
+        <div style="background: white; padding: 8px; border-radius: 4px; text-align: center;">消息通知</div>
+        <div style="background: white; padding: 8px; border-radius: 4px; text-align: center;">运营后台</div>
+      </div>
+    </div>
+    
+    <div style="text-align: center; color: #999;">▼ 数据访问</div>
+    
+    <div style="padding: 16px; background: #f3e5f5; border-radius: 8px; border: 2px solid #7b1fa2;">
+      <strong>💾 数据存储层</strong>
+      <div style="display: flex; gap: 8px; margin-top: 10px; justify-content: center; font-size: 13px;">
+        <div style="background: white; padding: 8px 16px; border-radius: 4px;">MySQL (业务数据)</div>
+        <div style="background: white; padding: 8px 16px; border-radius: 4px;">Redis (缓存/会话/队列)</div>
+        <div style="background: white; padding: 8px 16px; border-radius: 4px;">对象存储 (图片)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top: 40px;">
+  <h3>📦 业务模块详细说明</h3>
+  <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 16px;">
+    
+    <div style="padding: 14px; background: #fafafa; border-radius: 8px; border-left: 4px solid #4caf50;">
+      <strong>👤 用户模块</strong>
+      <span style="font-size: 13px; color: #666; margin-left: 12px;">注册登录、角色切换（买家/供应商/司机）、实名认证、资质审核、地址管理</span>
+    </div>
+    
+    <div style="padding: 14px; background: #fafafa; border-radius: 8px; border-left: 4px solid #2196f3;">
+      <strong>📦 商品模块</strong>
+      <span style="font-size: 13px; color: #666; margin-left: 12px;">品类管理、商品发布/上下架、规格属性（按品类模板）、库存管理、搜索筛选、商品评价</span>
+    </div>
+    
+    <div style="padding: 14px; background: #fafafa; border-radius: 8px; border-left: 4px solid #ff9800;">
+      <strong>🛒 订单模块</strong>
+      <span style="font-size: 13px; color: #666; margin-left: 12px;">购物车、下单（选择配送时效）、订单状态流转、取消订单、订单列表/详情</span>
+    </div>
+    
+    <div style="padding: 14px; background: #fafafa; border-radius: 8px; border-left: 4px solid #9c27b0;">
+      <strong>💳 支付/结算模块</strong>
+      <span style="font-size: 13px; color: #666; margin-left: 12px;">微信支付（担保交易）、佣金计算、自动分账、提现、财务流水</span>
+    </div>
+    
+    <div style="padding: 14px; background: #fafafa; border-radius: 8px; border-left: 4px solid #00bcd4;">
+      <strong>🚚 配送模块</strong>
+      <span style="font-size: 13px; color: #666; margin-left: 12px;">运费计算（固定+阶梯）、自动派单算法、抢单池、司机位置追踪、配送状态、自有司机管理</span>
+    </div>
+    
+    <div style="padding: 14px; background: #fafafa; border-radius: 8px; border-left: 4px solid #f44336;">
+      <strong>🔧 售后模块</strong>
+      <span style="font-size: 13px; color: #666; margin-left: 12px;">退换货申请、举证上传、买卖协商、平台仲裁、退款处理</span>
+    </div>
+    
+    <div style="padding: 14px; background: #fafafa; border-radius: 8px; border-left: 4px solid #607d8b;">
+      <strong>🔔 消息通知</strong>
+      <span style="font-size: 13px; color: #666; margin-left: 12px;">订单状态推送、配送进度、微信模板消息、站内信</span>
+    </div>
+    
+    <div style="padding: 14px; background: #fafafa; border-radius: 8px; border-left: 4px solid #795548;">
+      <strong>📊 运营后台 (H5)</strong>
+      <span style="font-size: 13px; color: #666; margin-left: 12px;">用户审核、商品管理、订单监控、财务管理、数据统计、佣金配置、系统设置</span>
+    </div>
+  </div>
+</div>
