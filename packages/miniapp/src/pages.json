@@ -64,6 +64,18 @@
         "navigationBarTitleText": "绿立方",
         "enablePullDownRefresh": true
       }
+    },
+    {
+      "path": "pages/supplier/product-list",
+      "style": {
+        "navigationBarTitleText": "商品管理"
+      }
+    },
+    {
+      "path": "pages/supplier/product-edit",
+      "style": {
+        "navigationBarTitleText": "编辑商品"
+      }
     }
   ],
   "globalStyle": {
