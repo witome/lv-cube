@@ -221,6 +221,7 @@ model Order {
   settlement          Settlement?
   delivery            Delivery?
   afterSales          AfterSale[]
+  refunds             Refund[]
 }
 
 model OrderItem {
@@ -372,4 +373,21 @@ model AfterSaleMessage {
 
   afterSale   AfterSale @relation(fields: [afterSaleId], references: [id])
   sender      User      @relation("SenderMessages", fields: [senderId], references: [id])
+}
+
+model Refund {
+  id             Int      @id @default(autoincrement())
+  orderId        Int
+  buyerId        Int
+  supplierId     Int
+  reason         String
+  amount         Decimal  @db.Decimal(10, 2)
+  status         String   @default("pending")
+  rejectedReason String?
+  approvedAt     DateTime?
+  rejectedAt     DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  order          Order    @relation(fields: [orderId], references: [id])
 }
