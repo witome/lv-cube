@@ -7,6 +7,18 @@
           <el-icon><DataBoard /></el-icon>
           <span>首页</span>
         </el-menu-item>
+        <el-sub-menu index="user">
+          <template #title><el-icon><User /></el-icon><span>用户管理</span></template>
+          <el-menu-item index="/user/list">用户列表</el-menu-item>
+          <el-menu-item index="/user/supplier-review">供应商审核</el-menu-item>
+          <el-menu-item index="/user/driver-review">司机审核</el-menu-item>
+        </el-sub-menu>
+        <el-sub-menu index="product">
+          <template #title><el-icon><Goods /></el-icon><span>商品管理</span></template>
+          <el-menu-item index="/category/list"><el-icon><SetUp /></el-icon>品类管理</el-menu-item>
+          <el-menu-item index="/category/attr-template"><el-icon><SetUp /></el-icon>属性模板</el-menu-item>
+          <el-menu-item index="/product/list"><el-icon><List /></el-icon>商品列表</el-menu-item>
+        </el-sub-menu>
       </el-menu>
     </el-aside>
     <el-container>

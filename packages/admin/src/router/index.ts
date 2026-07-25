@@ -19,6 +19,42 @@ const routes: RouteRecordRaw[] = [
         },
         meta: { title: '首页' },
       },
+      {
+        path: 'user/list',
+        name: 'UserList',
+        component: () => import('@/views/user/list.vue'),
+        meta: { title: '用户列表' },
+      },
+      {
+        path: 'user/supplier-review',
+        name: 'SupplierReview',
+        component: () => import('@/views/user/supplier-review.vue'),
+        meta: { title: '供应商审核' },
+      },
+      {
+        path: 'user/driver-review',
+        name: 'DriverReview',
+        component: () => import('@/views/user/driver-review.vue'),
+        meta: { title: '司机审核' },
+      },
+      {
+        path: 'category/list',
+        name: 'CategoryList',
+        component: () => import('@/views/category/index.vue'),
+        meta: { title: '品类管理' },
+      },
+      {
+        path: 'category/attr-template',
+        name: 'AttrTemplate',
+        component: () => import('@/views/category/attr-template.vue'),
+        meta: { title: '属性模板' },
+      },
+      {
+        path: 'product/list',
+        name: 'ProductList',
+        component: () => import('@/views/product/list.vue'),
+        meta: { title: '商品列表' },
+      },
     ],
   },
 ];
