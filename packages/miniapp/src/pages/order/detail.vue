@@ -92,6 +92,25 @@
         </view>
       </view>
 
+      <view v-if="order.refund" class="section-card refund-section">
+        <view class="section-title">退款信息</view>
+        <view class="refund-status" :class="getRefundStatusClass(order.refund.status)">
+          {{ getRefundStatusText(order.refund.status) }}
+        </view>
+        <view class="info-row">
+          <text class="info-label">退款金额</text>
+          <text class="info-value refund-amount">¥{{ order.refund.amount?.toFixed(2) }}</text>
+        </view>
+        <view class="info-row">
+          <text class="info-label">退款原因</text>
+          <text class="info-value">{{ order.refund.reason }}</text>
+        </view>
+        <view v-if="order.refund.rejectReason" class="info-row">
+          <text class="info-label">拒绝原因</text>
+          <text class="info-value">{{ order.refund.rejectReason }}</text>
+        </view>
+      </view>
+
       <view class="section-card">
         <view class="section-title">费用明细</view>
         <view class="fee-row">
@@ -126,6 +145,12 @@
         class="action-btn confirm"
         @click="handleConfirm">
         确认收货
+      </view>
+      <view
+        v-if="canApplyRefund(order.status, order.refund)"
+        class="action-btn refund"
+        @click="goApplyRefund">
+        申请退款
       </view>
       <view class="action-btn contact" @click="handleContact">
         联系供应商
@@ -218,8 +243,33 @@ function canConfirm(status: string) {
   return ['delivering', 'waiting_confirm'].includes(status);
 }
 
+function canApplyRefund(status: string, refund: any) {
+  return status === 'completed' && !refund;
+}
+
+const refundStatusMap: Record<string, { text: string; class: string }> = {
+  pending: { text: '退款处理中', class: 'refund-pending' },
+  approved: { text: '退款已同意', class: 'refund-approved' },
+  rejected: { text: '退款已拒绝', class: 'refund-rejected' },
+};
+
+function getRefundStatusText(status: string) {
+  return refundStatusMap[status]?.text || status;
+}
+
+function getRefundStatusClass(status: string) {
+  return refundStatusMap[status]?.class || '';
+}
+
 function goBack() {
   uni.navigateBack();
+}
+
+function goApplyRefund() {
+  if (!order.value) return;
+  uni.navigateTo({
+    url: `/pages/order/refund-apply?id=${order.value.id}&orderNo=${order.value.orderNo}&amount=${order.value.actualAmount}`,
+  });
 }
 
 async function loadDetail() {
@@ -664,10 +714,46 @@ onMounted(() => {
       color: #fff;
     }
 
+    &.refund {
+      background: #ff9800;
+      color: #fff;
+    }
+
     &.contact {
       border: 1rpx solid #2e7d32;
       color: #2e7d32;
     }
+  }
+}
+
+.refund-section {
+  .refund-status {
+    display: inline-block;
+    padding: 8rpx 20rpx;
+    border-radius: 8rpx;
+    font-size: 26rpx;
+    font-weight: 500;
+    margin-bottom: 16rpx;
+
+    &.refund-pending {
+      background: #fff3e0;
+      color: #ff9800;
+    }
+
+    &.refund-approved {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    &.refund-rejected {
+      background: #ffebee;
+      color: #e53935;
+    }
+  }
+
+  .refund-amount {
+    color: #e53935;
+    font-weight: 600;
   }
 }
 

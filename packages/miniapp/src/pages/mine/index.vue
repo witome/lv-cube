@@ -33,6 +33,14 @@
     </view>
 
     <view class="menu-section">
+      <view class="menu-item" @click="goMessage">
+        <view class="menu-icon-wrap">
+          <view class="menu-icon">💬</view>
+          <view v-if="unreadCount > 0" class="unread-badge">{{ unreadCount > 99 ? '99+' : unreadCount }}</view>
+        </view>
+        <view class="menu-text">消息中心</view>
+        <view class="menu-arrow">›</view>
+      </view>
       <view v-if="userStore.isLoggedIn && userStore.currentRole === 'supplier'" class="menu-item" @click="goOrderList">
         <view class="menu-icon">📋</view>
         <view class="menu-text">订单管理</view>
@@ -97,10 +105,14 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted } from 'vue';
+import { onShow } from '@dcloudio/uni-app';
 import { useUserStore } from '@/store/user';
 import { switchRole as apiSwitchRole } from '@/api/user';
+import { getUnreadCount } from '@/api/message';
 
 const userStore = useUserStore();
+const unreadCount = ref(0);
 
 const roles = [
   { value: 'buyer', label: '采购商', icon: '🛒' },
@@ -110,6 +122,23 @@ const roles = [
 
 function goLogin() {
   uni.navigateTo({ url: '/pages/login/index' });
+}
+
+function goMessage() {
+  uni.navigateTo({ url: '/pages/message/index' });
+}
+
+async function loadUnreadCount() {
+  if (!userStore.isLoggedIn) {
+    unreadCount.value = 0;
+    return;
+  }
+  try {
+    const data: any = await getUnreadCount();
+    unreadCount.value = data?.count || 0;
+  } catch (e) {
+    unreadCount.value = 0;
+  }
 }
 
 async function handleSwitchRole(role: string) {
@@ -174,6 +203,14 @@ function handleLogout() {
     },
   });
 }
+
+onMounted(() => {
+  loadUnreadCount();
+});
+
+onShow(() => {
+  loadUnreadCount();
+});
 </script>
 
 <style lang="scss" scoped>
@@ -307,6 +344,30 @@ function handleLogout() {
 .menu-icon {
   font-size: 40rpx;
   margin-right: 20rpx;
+}
+
+.menu-icon-wrap {
+  position: relative;
+  margin-right: 20rpx;
+
+  .menu-icon {
+    margin-right: 0;
+  }
+
+  .unread-badge {
+    position: absolute;
+    top: -8rpx;
+    right: -16rpx;
+    min-width: 32rpx;
+    height: 32rpx;
+    line-height: 32rpx;
+    padding: 0 8rpx;
+    background: #e53935;
+    color: #fff;
+    font-size: 20rpx;
+    border-radius: 16rpx;
+    text-align: center;
+  }
 }
 
 .menu-text {

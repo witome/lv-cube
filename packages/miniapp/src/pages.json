@@ -127,6 +127,27 @@
       }
     },
     {
+      "path": "pages/order/refund-apply",
+      "style": {
+        "navigationBarTitleText": "申请退款",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/order/refund-list",
+      "style": {
+        "navigationBarTitleText": "退款记录",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/message/index",
+      "style": {
+        "navigationBarTitleText": "消息中心",
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/payment/index",
       "style": {
         "navigationBarTitleText": "订单支付",
