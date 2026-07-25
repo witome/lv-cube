@@ -13,6 +13,7 @@ import { PaymentModule } from './payment/payment.module';
 import { SettlementModule } from './settlement/settlement.module';
 import { DeliveryModule } from './delivery/delivery.module';
 import { RefundModule } from './refund/refund.module';
+import { MessageModule } from './message/message.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { RefundModule } from './refund/refund.module';
     SettlementModule,
     DeliveryModule,
     RefundModule,
+    MessageModule,
   ],
 })
 export class AppModule {}

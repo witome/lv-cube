@@ -391,3 +391,15 @@ model Refund {
 
   order          Order    @relation(fields: [orderId], references: [id])
 }
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  type      String
+  title     String
+  content   String
+  relatedId Int?
+  isRead    Boolean  @default(false)
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+}
