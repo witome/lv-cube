@@ -44,3 +44,19 @@ export function request<T = any>(options: RequestOptions): Promise<T> {
     });
   });
 }
+
+request.get = function (url: string, data?: any) {
+  return request({ url, method: 'GET', data });
+};
+
+request.post = function (url: string, data?: any) {
+  return request({ url, method: 'POST', data });
+};
+
+request.put = function (url: string, data?: any) {
+  return request({ url, method: 'PUT', data });
+};
+
+request.delete = function (url: string, data?: any) {
+  return request({ url, method: 'DELETE', data });
+};

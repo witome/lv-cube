@@ -92,6 +92,13 @@
       }
     },
     {
+      "path": "pages/supplier/driver-manage",
+      "style": {
+        "navigationBarTitleText": "自有司机管理",
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/cart/index",
       "style": {
         "navigationBarTitleText": "购物车",

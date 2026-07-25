@@ -43,6 +43,11 @@
         <view class="menu-text">商品管理</view>
         <view class="menu-arrow">›</view>
       </view>
+      <view v-if="userStore.isLoggedIn && userStore.currentRole === 'supplier'" class="menu-item" @click="goDriverManage">
+        <view class="menu-icon">🚚</view>
+        <view class="menu-text">司机管理</view>
+        <view class="menu-arrow">›</view>
+      </view>
       <view v-if="userStore.isLoggedIn && userStore.currentRole === 'buyer'" class="menu-item" @click="goApply('supplier')">
         <view class="menu-icon">🏪</view>
         <view class="menu-text">供应商入驻</view>
@@ -139,6 +144,10 @@ function goSettlement() {
 
 function goProductList() {
   uni.navigateTo({ url: '/pages/supplier/product-list' });
+}
+
+function goDriverManage() {
+  uni.navigateTo({ url: '/pages/supplier/driver-manage' });
 }
 
 function goOrderList() {

@@ -24,3 +24,19 @@ export function markPickedUp(deliveryId: number) {
 export function markDelivered(deliveryId: number) {
   return request({ url: `/delivery/deliver/${deliveryId}`, method: 'PATCH' });
 }
+
+export function getOwnDrivers() {
+  return request.get('/delivery/own-drivers');
+}
+
+export function addOwnDriver(data: any) {
+  return request.post('/delivery/own-drivers', data);
+}
+
+export function removeOwnDriver(driverId: number) {
+  return request.delete(`/delivery/own-drivers/${driverId}`);
+}
+
+export function assignOwnDriver(orderId: number, driverId: number) {
+  return request.post(`/delivery/assign-own/${orderId}`, { driverId });
+}

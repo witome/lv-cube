@@ -145,10 +145,46 @@
         接单
       </view>
       <view
-        v-if="order.status === 'preparing'"
+        v-if="order.status === 'preparing' || order.status === 'pending_accept'"
+        class="action-btn assign-driver"
+        @click="openDriverModal">
+        指定自有司机配送
+      </view>
+      <view
+        v-if="order.status === 'preparing' || order.status === 'pending_accept'"
         class="action-btn ship"
         @click="handleShip">
-        标记已发货
+        发平台派单
+      </view>
+    </view>
+
+    <view v-if="showDriverModal" class="modal-mask" @click="closeDriverModal">
+      <view class="modal-content" @click.stop>
+        <view class="modal-title">选择司机</view>
+        <scroll-view v-if="driverList.length > 0" class="driver-list" scroll-y>
+          <view
+            v-for="driver in driverList"
+            :key="driver.id"
+            class="driver-option"
+            :class="{ selected: selectedDriverId === driver.id }"
+            @click="selectedDriverId = driver.id">
+            <view class="driver-opt-info">
+              <text class="driver-opt-name">{{ driver.name }}</text>
+              <text class="driver-opt-phone">{{ driver.phone }}</text>
+            </view>
+            <view v-if="selectedDriverId === driver.id" class="driver-check">✓</view>
+          </view>
+        </scroll-view>
+        <view v-else-if="!driverLoading" class="driver-empty">
+          <text class="empty-text">暂无司机，请先添加</text>
+        </view>
+        <view v-else class="driver-empty">
+          <text class="empty-text">加载中...</text>
+        </view>
+        <view class="modal-actions">
+          <view class="modal-btn cancel" @click="closeDriverModal">取消</view>
+          <view class="modal-btn confirm" @click="handleAssignDriver">确认指派</view>
+        </view>
       </view>
     </view>
 
@@ -161,10 +197,15 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { getOrderDetail, acceptOrder, rejectOrder, shipOrder } from '@/api/order';
+import { getOwnDrivers, assignOwnDriver } from '@/api/delivery';
 
 const placeholderImg = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y1ZjVmNSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj7nlJ/npL7lj4rlkI08L3RleHQ+PC9zdmc+';
 
 const order = ref<any>(null);
+const showDriverModal = ref(false);
+const driverList = ref<any[]>([]);
+const driverLoading = ref(false);
+const selectedDriverId = ref<number | null>(null);
 
 const timelineSteps = [
   { value: 'pending_accept', label: '待接单' },
@@ -286,15 +327,47 @@ function handleReject() {
   });
 }
 
+async function openDriverModal() {
+  showDriverModal.value = true;
+  selectedDriverId.value = null;
+  driverLoading.value = true;
+  try {
+    const data = await getOwnDrivers();
+    driverList.value = data || [];
+  } catch (e) {
+    console.error('加载司机列表失败', e);
+  } finally {
+    driverLoading.value = false;
+  }
+}
+
+function closeDriverModal() {
+  showDriverModal.value = false;
+}
+
+async function handleAssignDriver() {
+  if (!selectedDriverId.value) {
+    uni.showToast({ title: '请选择司机', icon: 'none' });
+    return;
+  }
+  if (!order.value) return;
+  try {
+    await assignOwnDriver(order.value.id, selectedDriverId.value);
+    uni.showToast({ title: '已指派司机', icon: 'success' });
+    closeDriverModal();
+    loadDetail();
+  } catch (e) {}
+}
+
 async function handleShip() {
   uni.showModal({
     title: '提示',
-    content: '确定标记已发货吗？',
+    content: '确定发平台派单吗？',
     success: async (res) => {
       if (res.confirm && order.value) {
         try {
           await shipOrder(order.value.id);
-          uni.showToast({ title: '已发货', icon: 'success' });
+          uni.showToast({ title: '已发货，平台派单中', icon: 'success' });
           loadDetail();
         } catch (e) {}
       }
@@ -732,6 +805,125 @@ onMounted(() => {
     &.ship {
       background: #2e7d32;
       color: #fff;
+    }
+
+    &.assign-driver {
+      border: 1rpx solid #2e7d32;
+      color: #2e7d32;
+      background: #fff;
+    }
+  }
+}
+
+.modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+
+  .modal-content {
+    width: 600rpx;
+    max-height: 80vh;
+    background: #fff;
+    border-radius: 20rpx;
+    padding: 40rpx;
+    display: flex;
+    flex-direction: column;
+
+    .modal-title {
+      font-size: 34rpx;
+      font-weight: 600;
+      color: #333;
+      text-align: center;
+      margin-bottom: 32rpx;
+    }
+
+    .driver-list {
+      max-height: 500rpx;
+      margin-bottom: 24rpx;
+
+      .driver-option {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 24rpx;
+        border-radius: 12rpx;
+        border: 2rpx solid #f0f0f0;
+        margin-bottom: 16rpx;
+
+        &.selected {
+          border-color: #2e7d32;
+          background: #e8f5e9;
+        }
+
+        .driver-opt-info {
+          .driver-opt-name {
+            font-size: 30rpx;
+            font-weight: 600;
+            color: #333;
+            display: block;
+          }
+
+          .driver-opt-phone {
+            font-size: 26rpx;
+            color: #666;
+            margin-top: 6rpx;
+            display: block;
+          }
+        }
+
+        .driver-check {
+          width: 44rpx;
+          height: 44rpx;
+          border-radius: 50%;
+          background: #2e7d32;
+          color: #fff;
+          font-size: 28rpx;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+      }
+    }
+
+    .driver-empty {
+      padding: 60rpx 0;
+      text-align: center;
+
+      .empty-text {
+        font-size: 28rpx;
+        color: #999;
+      }
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 24rpx;
+
+      .modal-btn {
+        flex: 1;
+        height: 80rpx;
+        line-height: 80rpx;
+        text-align: center;
+        border-radius: 40rpx;
+        font-size: 28rpx;
+
+        &.cancel {
+          background: #f5f5f5;
+          color: #666;
+        }
+
+        &.confirm {
+          background: #2e7d32;
+          color: #fff;
+        }
+      }
     }
   }
 }
