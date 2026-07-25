@@ -53,7 +53,7 @@
         <view class="menu-text">地址管理</view>
         <view class="menu-arrow">›</view>
       </view>
-      <view class="menu-item" @click="handlePlaceholder('我的订单')">
+      <view class="menu-item" @click="goOrderList">
         <view class="menu-icon">📋</view>
         <view class="menu-text">我的订单</view>
         <view class="menu-arrow">›</view>
@@ -107,6 +107,10 @@ function goAddress() {
 
 function goProductList() {
   uni.navigateTo({ url: '/pages/supplier/product-list' });
+}
+
+function goOrderList() {
+  uni.navigateTo({ url: '/pages/order/list' });
 }
 
 function handlePlaceholder(text: string) {

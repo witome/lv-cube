@@ -118,6 +118,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { getProductDetail } from '@/api/product';
+import { addCart } from '@/api/cart';
 
 const placeholderImg = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y1ZjVmNSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj7nlJ/npL7lj4rlkI08L3RleHQ+PC9zdmc+';
 
@@ -190,12 +191,19 @@ function contactSupplier() {
   }
 }
 
-function handleAddCart() {
+async function handleAddCart() {
   if (!selectedSku.value && product.value?.skus?.length) {
     showSkuPopup.value = true;
     return;
   }
-  uni.showToast({ title: '已加入购物车', icon: 'success' });
+  try {
+    await addCart({
+      productId: product.value.id,
+      skuId: selectedSku.value.id,
+      quantity: 1,
+    });
+    uni.showToast({ title: '已加入购物车', icon: 'success' });
+  } catch (e) {}
 }
 
 function handleBuyNow() {
@@ -203,7 +211,19 @@ function handleBuyNow() {
     showSkuPopup.value = true;
     return;
   }
-  uni.showToast({ title: '立即购买功能开发中', icon: 'none' });
+  const items = [{
+    productId: product.value.id,
+    skuId: selectedSku.value.id,
+    quantity: 1,
+    price: selectedSku.value.price,
+    name: product.value.name,
+    spec: selectedSku.value.skuName,
+    mainImage: product.value.mainImages?.[0] || '',
+    supplierId: product.value.supplierId,
+  }];
+  uni.navigateTo({
+    url: `/pages/order/confirm?items=${encodeURIComponent(JSON.stringify(items))}`,
+  });
 }
 </script>
 
