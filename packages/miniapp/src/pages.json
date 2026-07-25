@@ -139,6 +139,20 @@
         "navigationBarTitleText": "申请提现",
         "navigationStyle": "custom"
       }
+    },
+    {
+      "path": "pages/driver/pool",
+      "style": {
+        "navigationBarTitleText": "附近抢单",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/driver/tasks",
+      "style": {
+        "navigationBarTitleText": "我的任务",
+        "navigationStyle": "custom"
+      }
     }
   ],
   "globalStyle": {
