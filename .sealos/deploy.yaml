@@ -1,0 +1,169 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: lv-cube-server
+  labels:
+    app: lv-cube-server
+spec:
+  selector:
+    app: lv-cube-server
+  ports:
+    - port: 3000
+      targetPort: 3000
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: lv-cube-server
+  labels:
+    app: lv-cube-server
+spec:
+  replicas: 1
+  serviceName: lv-cube-server
+  selector:
+    matchLabels:
+      app: lv-cube-server
+  template:
+    metadata:
+      labels:
+        app: lv-cube-server
+    spec:
+      automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: lv-cube-server
+          image: ghcr.io/witome/lv-cube-server:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: PORT
+              value: '3000'
+            - name: JWT_SECRET
+              value: lv-cube-dev-secret-key-change-me
+            - name: DATABASE_URL
+              value: file:/app/data/dev.db
+            - name: ADMIN_USERNAME
+              value: admin
+            - name: ADMIN_PASSWORD
+              value: '123456'
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lv-cube-miniapp
+  labels:
+    app: lv-cube-miniapp
+spec:
+  selector:
+    app: lv-cube-miniapp
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lv-cube-miniapp
+  labels:
+    app: lv-cube-miniapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lv-cube-miniapp
+  template:
+    metadata:
+      labels:
+        app: lv-cube-miniapp
+    spec:
+      automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: lv-cube-miniapp
+          image: ghcr.io/witome/lv-cube-miniapp:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          env:
+            - name: API_BASE_URL
+              value: http://lv-cube-server:3000
+          resources:
+            requests:
+              cpu: 20m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lv-cube-admin
+  labels:
+    app: lv-cube-admin
+spec:
+  selector:
+    app: lv-cube-admin
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lv-cube-admin
+  labels:
+    app: lv-cube-admin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lv-cube-admin
+  template:
+    metadata:
+      labels:
+        app: lv-cube-admin
+    spec:
+      automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: lv-cube-admin
+          image: ghcr.io/witome/lv-cube-admin:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          env:
+            - name: API_BASE_URL
+              value: http://lv-cube-server:3000
+          resources:
+            requests:
+              cpu: 20m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
