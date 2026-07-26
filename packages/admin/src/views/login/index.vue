@@ -4,8 +4,8 @@
       <h1 class="title">绿立方运营后台</h1>
       <p class="subtitle">登录您的管理账号</p>
       <el-form ref="formRef" :model="form" :rules="rules" class="form">
-        <el-form-item prop="username">
-          <el-input v-model="form.username" placeholder="用户名" size="large" />
+        <el-form-item prop="phone">
+          <el-input v-model="form.phone" placeholder="手机号" size="large" />
         </el-form-item>
         <el-form-item prop="password">
           <el-input
@@ -35,12 +35,15 @@ const formRef = ref<FormInstance>();
 const loading = ref(false);
 
 const form = reactive({
-  username: '',
+  phone: '',
   password: '',
 });
 
 const rules: FormRules = {
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  phone: [
+    { required: true, message: '请输入手机号', trigger: 'blur' },
+    { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' },
+  ],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
 };
 
