@@ -74,6 +74,8 @@ const tabs = [
 const currentTab = ref('');
 const list = ref<any[]>([]);
 const loading = ref(false);
+const page = ref(1);
+const hasMore = ref(true);
 
 const filteredList = computed(() => {
   if (!currentTab.value) return list.value;
@@ -134,11 +136,20 @@ async function handleMarkAllRead() {
   } catch (e) {}
 }
 
-async function loadList() {
+async function loadList(reset = false) {
+  if (reset) { page.value = 1; hasMore.value = true; }
+  if (!hasMore.value) return;
   loading.value = true;
   try {
-    const data = await getMessageList(1, 50);
-    list.value = data as any[];
+    const data = await getMessageList(page.value, 50);
+    const items = Array.isArray(data) ? data : (data?.list || []);
+    if (reset) {
+      list.value = items;
+    } else {
+      list.value = [...list.value, ...items];
+    }
+    hasMore.value = items.length >= 50;
+    page.value++;
   } catch (e) {
     list.value = [];
   } finally {
@@ -146,11 +157,13 @@ async function loadList() {
   }
 }
 
+function loadMore() {
+  loadList();
+}
+
 function switchTab(tab: string) {
   currentTab.value = tab;
 }
-
-function loadMore() {}
 
 onMounted(() => {
   loadList();
