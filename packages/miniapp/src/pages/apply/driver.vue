@@ -87,10 +87,16 @@ async function handleSubmit() {
 
   loading.value = true;
   try {
-    await applyDriver(form);
+    await applyDriver({
+      driverName: form.driverName,
+      licenseNo: form.licenseNo,
+      vehiclePlate: form.plateNo,
+      vehicleType: form.vehicleType,
+      capacity: Number(form.loadCapacity),
+    });
     submitted.value = true;
-  } catch (e) {
-    submitted.value = true;
+  } catch (e: any) {
+    uni.showToast({ title: e?.message || '提交失败，请稍后重试', icon: 'none' });
   } finally {
     loading.value = false;
   }
