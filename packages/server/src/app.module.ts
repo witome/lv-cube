@@ -37,6 +37,7 @@ import { UploadModule } from './upload/upload.module';
     DeliveryModule,
     RefundModule,
     MessageModule,
+    SupplierModule,
     UploadModule,
   ],
 })
