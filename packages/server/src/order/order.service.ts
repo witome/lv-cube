@@ -180,22 +180,28 @@ export class OrderService {
     });
     if (!order) throw new BadRequestException('订单不存在');
     const isAdmin = roles?.includes('admin');
-    if (!isAdmin && order.buyerId !== userId && order.supplierId !== userId) {
-      throw new ForbiddenException('无权查看');
-    }
-    return order;
+    if (isAdmin) return order;
+    if (order.buyerId === userId) return order;
+    // 供应商查看：查 SupplierProfile
+    const profile = await this.prisma.supplierProfile.findUnique({ where: { userId } });
+    if (profile && order.supplierId === profile.id) return order;
+    throw new ForbiddenException('无权查看');
   }
 
-  async acceptOrder(supplierId: number, id: number) {
+  async acceptOrder(userId: number, id: number) {
     const order = await this.prisma.order.findUnique({ where: { id } });
-    if (!order || order.supplierId !== supplierId) throw new ForbiddenException('无权操作');
+    const profile = await this.prisma.supplierProfile.findUnique({ where: { userId } });
+    if (!profile) throw new BadRequestException('供应商档案不存在');
+    if (!order || order.supplierId !== profile.id) throw new ForbiddenException('无权操作');
     if (order.status !== 'pending_accept') throw new BadRequestException('订单状态不正确');
     return this.prisma.order.update({ where: { id }, data: { status: 'preparing', acceptedAt: new Date() } });
   }
 
-  async rejectOrder(supplierId: number, id: number, reason: string) {
+  async rejectOrder(userId: number, id: number, reason: string) {
     const order = await this.prisma.order.findUnique({ where: { id } });
-    if (!order || order.supplierId !== supplierId) throw new ForbiddenException('无权操作');
+    const profile = await this.prisma.supplierProfile.findUnique({ where: { userId } });
+    if (!profile) throw new BadRequestException('供应商档案不存在');
+    if (!order || order.supplierId !== profile.id) throw new ForbiddenException('无权操作');
     if (order.status !== 'pending_accept') throw new BadRequestException('订单状态不正确');
     const items = await this.prisma.orderItem.findMany({ where: { orderId: id } });
     for (const item of items) {
@@ -210,9 +216,11 @@ export class OrderService {
     });
   }
 
-  async markDelivering(supplierId: number, id: number) {
+  async markDelivering(userId: number, id: number) {
     const order = await this.prisma.order.findUnique({ where: { id } });
-    if (!order || order.supplierId !== supplierId) throw new ForbiddenException('无权操作');
+    const profile = await this.prisma.supplierProfile.findUnique({ where: { userId } });
+    if (!profile) throw new BadRequestException('供应商档案不存在');
+    if (!order || order.supplierId !== profile.id) throw new ForbiddenException('无权操作');
     if (order.status !== 'preparing') throw new BadRequestException('订单状态不正确');
     return this.prisma.order.update({ where: { id }, data: { status: 'delivering', deliveredAt: new Date() } });
   }
