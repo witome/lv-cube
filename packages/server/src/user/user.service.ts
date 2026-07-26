@@ -111,10 +111,13 @@ export class UserService {
       return reviewed;
     });
 
-    // 发送审核通知
+    // 重新查询 profile 用于发通知
+    const reviewedProfile = role === 'supplier'
+      ? await this.prisma.supplierProfile.findUnique({ where: { id: profileId } })
+      : await this.prisma.driverProfile.findUnique({ where: { id: profileId } });
     const roleLabel = role === 'supplier' ? '供应商' : '司机';
     await this.messageService.create(
-      profile.userId,
+      reviewedProfile!.userId,
       'system',
       `${roleLabel}申请${dto.approved ? '通过' : '未通过'}`,
       dto.approved
