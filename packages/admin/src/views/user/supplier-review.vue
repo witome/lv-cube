@@ -110,8 +110,8 @@ async function confirmApprove() {
     ElMessage.success('已通过审核');
     approveDialogVisible.value = false;
     // 弹出分类选择
-    const cats = await getSupplierCategories(currentRow.value.id);
-    checkedCategories.value = cats || [];
+    const cats: any = await getSupplierCategories(currentRow.value.id);
+    checkedCategories.value = Array.isArray(cats) ? cats : (cats?.data || []);
     await loadCategoryTree();
     catDialogVisible.value = true;
   } catch {

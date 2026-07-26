@@ -230,6 +230,7 @@
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted } from 'vue';
 import { getCategoryTree } from '@/api/category';
+import { getMyCategories } from '@/api/supplier';
 import { getProductDetail } from '@/api/product';
 import { createProduct, updateProduct } from '@/api/supplier-product';
 import { uploadImage } from '@/api/upload';
@@ -301,8 +302,24 @@ onMounted(async () => {
 
 async function loadCategories() {
   try {
-    const data = await getCategoryTree();
-    categoryTree.value = data || [];
+    const [data, allowedIds] = await Promise.all([
+      getCategoryTree(),
+      getMyCategories(),
+    ]);
+    const allowed = new Set(allowedIds || []);
+    if (allowed.size > 0 && data) {
+      // 只保留授权的顶级分类和子分类
+      categoryTree.value = data.filter((top: any) => {
+        if (allowed.has(top.id)) return true;
+        if (top.children) {
+          top.children = top.children.filter((c: any) => allowed.has(c.id));
+          return top.children.length > 0;
+        }
+        return false;
+      });
+    } else {
+      categoryTree.value = data || [];
+    }
   } catch (e) {
     console.error('加载品类失败', e);
   }

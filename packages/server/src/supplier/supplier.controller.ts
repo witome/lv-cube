@@ -8,6 +8,20 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 export class SupplierCategoryController {
   constructor(private prisma: PrismaService) {}
 
+  @Get('my-categories')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '[供应商] 获取本人授权分类ID列表' })
+  async getMyCategories(@Request() req: any) {
+    const profile = await this.prisma.supplierProfile.findUnique({ where: { userId: req.user.id } });
+    if (!profile) return [];
+    const list = await this.prisma.supplierCategory.findMany({
+      where: { supplierId: profile.id },
+      select: { categoryId: true },
+    });
+    return list.map(x => x.categoryId);
+  }
+
   @Get(':id/categories')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
