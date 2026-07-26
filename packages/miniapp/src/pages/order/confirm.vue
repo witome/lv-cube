@@ -240,6 +240,14 @@ onMounted(() => {
   parseItemsFromQuery();
   loadDefaultAddress();
 });
+
+// 供地址选择页面回调
+function onAddressSelect(addr: any) {
+  address.value = addr;
+}
+
+// 暴露给上一个页面
+defineExpose({ onAddressSelect });
 </script>
 
 <style lang="scss" scoped>

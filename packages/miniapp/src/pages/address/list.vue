@@ -23,7 +23,7 @@
         v-for="item in list"
         :key="item.id"
         class="address-item"
-        @click="handleSetDefault(item)">
+        @click="isSelectMode ? handleSelect(item) : handleSetDefault(item)">
         <view class="address-main">
           <view class="address-top">
             <text class="name">{{ item.name }}</text>
@@ -51,6 +51,7 @@ import { ref, onMounted } from 'vue';
 import { getAddressList, setDefaultAddress, deleteAddress } from '@/api/address';
 
 const list = ref<any[]>([]);
+const isSelectMode = ref(false);
 
 async function fetchList() {
   try {
@@ -61,12 +62,28 @@ async function fetchList() {
   }
 }
 
+onMounted(() => {
+  const pages = getCurrentPages();
+  const currentPage: any = pages[pages.length - 1];
+  isSelectMode.value = currentPage?.options?.select === '1';
+  fetchList();
+});
+
 function goBack() {
   uni.navigateBack();
 }
 
 function goAdd() {
   uni.navigateTo({ url: '/pages/address/edit' });
+}
+
+function handleSelect(item: any) {
+  const pages = getCurrentPages();
+  const prevPage = pages[pages.length - 2];
+  if (prevPage) {
+    prevPage.$vm && prevPage.$vm.onAddressSelect && prevPage.$vm.onAddressSelect(item);
+  }
+  uni.navigateBack();
 }
 
 function goEdit(item: any) {
