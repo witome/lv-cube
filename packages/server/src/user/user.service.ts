@@ -77,18 +77,19 @@ export class UserService {
 
   private async reviewRole(role: 'supplier' | 'driver', profileId: number, dto: ReviewDto) {
     return this.prisma.$transaction(async (prisma) => {
-      const profileClient = role === 'supplier' ? prisma.supplierProfile : prisma.driverProfile;
-      const profile = await profileClient.findUnique({ where: { id: profileId } });
+      const profile = role === 'supplier'
+        ? await prisma.supplierProfile.findUnique({ where: { id: profileId } })
+        : await prisma.driverProfile.findUnique({ where: { id: profileId } });
       if (!profile) throw new BadRequestException('申请记录不存在');
 
-      const reviewed = await profileClient.update({
-        where: { id: profileId },
-        data: {
-          auditStatus: dto.approved ? 'approved' : 'rejected',
-          auditRemark: dto.remark,
-          auditAt: new Date(),
-        },
-      });
+      const reviewData = {
+        auditStatus: dto.approved ? 'approved' : 'rejected',
+        auditRemark: dto.remark,
+        auditAt: new Date(),
+      };
+      const reviewed = role === 'supplier'
+        ? await prisma.supplierProfile.update({ where: { id: profileId }, data: reviewData })
+        : await prisma.driverProfile.update({ where: { id: profileId }, data: reviewData });
 
       if (dto.approved) {
         const user = await prisma.user.findUnique({ where: { id: profile.userId } });
