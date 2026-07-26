@@ -1,5 +1,5 @@
 import { IsNotEmpty, IsString, IsBoolean, IsOptional, IsNumber, Matches } from 'class-validator';
-import { CHINA_MOBILE_PATTERN } from '@lv-cube/shared';
+import { CHINA_MOBILE_PATTERN } from '../../common/validation/phone';
 
 export class CreateAddressDto {
   @IsNotEmpty()

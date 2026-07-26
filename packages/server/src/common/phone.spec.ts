@@ -1,4 +1,4 @@
-import { isChinaMobile } from '@lv-cube/shared';
+import { isChinaMobile } from './validation/phone';
 
 describe('isChinaMobile', () => {
   it.each(['13800138000', '19912345678'])('accepts valid mobile %s', (phone) => {
@@ -12,4 +12,3 @@ describe('isChinaMobile', () => {
     },
   );
 });
-

@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { isChinaMobile } from '@lv-cube/shared';
+import { isChinaMobile } from '../common/validation/phone';
 
 @Injectable()
 export class DeliveryService {

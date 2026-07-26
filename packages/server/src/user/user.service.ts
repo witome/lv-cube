@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ApplySupplierDto } from './dto/apply-supplier.dto';
 import { ApplyDriverDto } from './dto/apply-driver.dto';
 import { ReviewDto } from './dto/review.dto';
-import { isChinaMobile } from '@lv-cube/shared';
+import { isChinaMobile } from '../common/validation/phone';
 
 @Injectable()
 export class UserService {
