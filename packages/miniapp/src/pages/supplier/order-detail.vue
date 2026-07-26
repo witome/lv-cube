@@ -145,46 +145,10 @@
         接单
       </view>
       <view
-        v-if="order.status === 'preparing' || order.status === 'pending_accept'"
-        class="action-btn assign-driver"
-        @click="openDriverModal">
-        指定自有司机配送
-      </view>
-      <view
-        v-if="order.status === 'preparing' || order.status === 'pending_accept'"
+        v-if="order.status === 'preparing'"
         class="action-btn ship"
         @click="handleShip">
         发平台派单
-      </view>
-    </view>
-
-    <view v-if="showDriverModal" class="modal-mask" @click="closeDriverModal">
-      <view class="modal-content" @click.stop>
-        <view class="modal-title">选择司机</view>
-        <scroll-view v-if="driverList.length > 0" class="driver-list" scroll-y>
-          <view
-            v-for="driver in driverList"
-            :key="driver.id"
-            class="driver-option"
-            :class="{ selected: selectedDriverId === driver.id }"
-            @click="selectedDriverId = driver.id">
-            <view class="driver-opt-info">
-              <text class="driver-opt-name">{{ driver.name }}</text>
-              <text class="driver-opt-phone">{{ driver.phone }}</text>
-            </view>
-            <view v-if="selectedDriverId === driver.id" class="driver-check">✓</view>
-          </view>
-        </scroll-view>
-        <view v-else-if="!driverLoading" class="driver-empty">
-          <text class="empty-text">暂无司机，请先添加</text>
-        </view>
-        <view v-else class="driver-empty">
-          <text class="empty-text">加载中...</text>
-        </view>
-        <view class="modal-actions">
-          <view class="modal-btn cancel" @click="closeDriverModal">取消</view>
-          <view class="modal-btn confirm" @click="handleAssignDriver">确认指派</view>
-        </view>
       </view>
     </view>
 
@@ -197,15 +161,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { getOrderDetail, acceptOrder, rejectOrder, shipOrder } from '@/api/order';
-import { getOwnDrivers, assignOwnDriver } from '@/api/delivery';
 
 const placeholderImg = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y1ZjVmNSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj7nlJ/npL7lj4rlkI08L3RleHQ+PC9zdmc+';
 
 const order = ref<any>(null);
-const showDriverModal = ref(false);
-const driverList = ref<any[]>([]);
-const driverLoading = ref(false);
-const selectedDriverId = ref<number | null>(null);
 
 const timelineSteps = [
   { value: 'pending_accept', label: '待接单' },
@@ -325,38 +284,6 @@ function handleReject() {
       }
     },
   });
-}
-
-async function openDriverModal() {
-  showDriverModal.value = true;
-  selectedDriverId.value = null;
-  driverLoading.value = true;
-  try {
-    const data = await getOwnDrivers();
-    driverList.value = data || [];
-  } catch (e) {
-    console.error('加载司机列表失败', e);
-  } finally {
-    driverLoading.value = false;
-  }
-}
-
-function closeDriverModal() {
-  showDriverModal.value = false;
-}
-
-async function handleAssignDriver() {
-  if (!selectedDriverId.value) {
-    uni.showToast({ title: '请选择司机', icon: 'none' });
-    return;
-  }
-  if (!order.value) return;
-  try {
-    await assignOwnDriver(order.value.id, selectedDriverId.value);
-    uni.showToast({ title: '已指派司机', icon: 'success' });
-    closeDriverModal();
-    loadDetail();
-  } catch (e) {}
 }
 
 async function handleShip() {

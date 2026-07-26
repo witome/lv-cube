@@ -222,7 +222,30 @@ export class OrderService {
     if (!profile) throw new BadRequestException('供应商档案不存在');
     if (!order || order.supplierId !== profile.id) throw new ForbiddenException('无权操作');
     if (order.status !== 'preparing') throw new BadRequestException('订单状态不正确');
-    return this.prisma.order.update({ where: { id }, data: { status: 'delivering', deliveredAt: new Date() } });
+
+    const result = await this.prisma.order.update({ where: { id }, data: { status: 'delivering', shippedAt: new Date() } });
+
+    // 自动创建配送池记录
+    const existingDelivery = await this.prisma.delivery.findUnique({ where: { orderId: id } });
+    if (!existingDelivery) {
+      const addr = JSON.parse(order.addressSnapshot || '{}');
+      const deliveryAddress = `${addr.province || ''}${addr.city || ''}${addr.district || ''}${addr.detail || ''}`;
+      await this.prisma.delivery.create({
+        data: {
+          orderId: id,
+          supplierId: order.supplierId,
+          type: 'platform',
+          status: 'pending',
+          pickupAddress: '供应商仓库',
+          deliveryAddress: deliveryAddress || '未知地址',
+        },
+      });
+    }
+
+    // 发送通知给管理员
+    await this.messageService.create(1, 'delivery', `订单 ${order.orderNo} 待配送`, `供应商已发货，订单 ${order.orderNo} 进入配送池，请安排司机。`);
+
+    return result;
   }
 
   async confirmReceive(buyerId: number, id: number) {
