@@ -117,7 +117,7 @@ async function fetchList() {
     const params: any = {
       page: page.value,
       pageSize,
-      supplierId: userStore.userInfo?.id,
+      supplierId: userStore.userInfo?.supplier?.id,
     };
     if (activeTab.value) {
       params.status = activeTab.value;

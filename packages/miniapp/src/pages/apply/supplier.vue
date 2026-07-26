@@ -29,11 +29,15 @@
         </view>
 
         <view class="input-item">
-          <text class="input-label">营业执照 <text class="required">*</text></text>
-          <input
-            v-model="form.businessLicense"
-            class="input" type="text" placeholder="请输入营业执照图片链接" />
-          <view class="input-hint">MVP 阶段支持手动输入图片链接</view>
+          <text class="input-label">营业执照（选填）</text>
+          <view v-if="form.businessLicense" class="license-preview">
+            <image class="license-image" :src="form.businessLicense" mode="aspectFill" />
+            <view class="license-remove" @click="form.businessLicense = ''">删除</view>
+          </view>
+          <view v-else class="license-upload" @click="chooseBusinessLicense">
+            <text class="upload-plus">+</text>
+            <text>{{ uploadingLicense ? '上传中...' : '上传营业执照' }}</text>
+          </view>
         </view>
 
         <view class="input-item">
@@ -54,9 +58,11 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
 import { applySupplier } from '@/api/user';
+import { uploadImage } from '@/api/upload';
 
 const loading = ref(false);
 const submitted = ref(false);
+const uploadingLicense = ref(false);
 
 const form = reactive({
   shopName: '',
@@ -66,7 +72,7 @@ const form = reactive({
 });
 
 async function handleSubmit() {
-  if (!form.shopName || !form.shopIntro || !form.businessLicense) {
+  if (!form.shopName || !form.shopIntro) {
     uni.showToast({ title: '请填写必填项', icon: 'none' });
     return;
   }
@@ -76,9 +82,34 @@ async function handleSubmit() {
     await applySupplier(form);
     submitted.value = true;
   } catch (e) {
-    submitted.value = true;
+    console.error('供应商申请提交失败', e);
   } finally {
     loading.value = false;
+  }
+}
+
+async function chooseBusinessLicense() {
+  if (uploadingLicense.value) return;
+  try {
+    const result: any = await new Promise((resolve, reject) => {
+      uni.chooseImage({
+        count: 1,
+        sizeType: ['compressed'],
+        sourceType: ['album', 'camera'],
+        success: resolve,
+        fail: reject,
+      });
+    });
+    uploadingLicense.value = true;
+    const uploaded = await uploadImage(result.tempFilePaths[0]);
+    const baseUrl = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/api$/, '');
+    form.businessLicense = uploaded.url.startsWith('http')
+      ? uploaded.url
+      : `${baseUrl}${uploaded.url}`;
+  } catch (e) {
+    console.error('营业执照上传失败', e);
+  } finally {
+    uploadingLicense.value = false;
   }
 }
 
@@ -214,6 +245,46 @@ function goBack() {
   font-size: 22rpx;
   color: #999;
   margin-top: 8rpx;
+}
+
+.license-upload {
+  height: 180rpx;
+  border: 2rpx dashed #bdbdbd;
+  border-radius: 12rpx;
+  color: #777;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+}
+
+.upload-plus {
+  font-size: 56rpx;
+  color: #2e7d32;
+}
+
+.license-preview {
+  position: relative;
+  width: 240rpx;
+  height: 180rpx;
+}
+
+.license-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 12rpx;
+}
+
+.license-remove {
+  position: absolute;
+  right: 8rpx;
+  top: 8rpx;
+  padding: 6rpx 14rpx;
+  border-radius: 20rpx;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.6);
+  font-size: 22rpx;
 }
 
 .footer {

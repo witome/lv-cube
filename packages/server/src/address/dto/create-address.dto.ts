@@ -15,17 +15,17 @@ export class CreateAddressDto {
   @Matches(CHINA_MOBILE_PATTERN, { message: '手机号必须为11位中国大陆手机号' })
   phone: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  province: string;
+  province?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  city: string;
+  city?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  district: string;
+  district?: string;
 
   @IsNotEmpty()
   @IsString()

@@ -8,6 +8,12 @@ export class AddressService {
   constructor(private prisma: PrismaService) {}
 
   async create(userId: number, dto: CreateAddressDto) {
+    const normalizedDto = {
+      ...dto,
+      province: dto.province || '',
+      city: dto.city || '',
+      district: dto.district || '',
+    };
     if (dto.isDefault) {
       await this.prisma.address.updateMany({
         where: { userId, type: dto.type, isDefault: true },
@@ -16,7 +22,7 @@ export class AddressService {
     }
     const hasAddresses = await this.prisma.address.count({ where: { userId, type: dto.type } });
     return this.prisma.address.create({
-      data: { userId, ...dto, isDefault: dto.isDefault ?? hasAddresses === 0 },
+      data: { userId, ...normalizedDto, isDefault: dto.isDefault ?? hasAddresses === 0 },
     });
   }
 

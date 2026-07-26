@@ -46,8 +46,8 @@ export class UserService {
 
     return this.prisma.supplierProfile.upsert({
       where: { userId },
-      update: { ...dto, auditStatus: 'pending', auditRemark: null, auditAt: null },
-      create: { userId, ...dto },
+      update: { ...dto, businessLicense: dto.businessLicense || '', auditStatus: 'pending', auditRemark: null, auditAt: null },
+      create: { userId, ...dto, businessLicense: dto.businessLicense || '' },
     });
   }
 

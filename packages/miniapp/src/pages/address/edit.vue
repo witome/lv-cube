@@ -26,16 +26,6 @@
       </view>
 
       <view class="input-item">
-        <text class="input-label">所在地区 <text class="required">*</text></text>
-        <picker mode="region" :value="regionValue" @change="handleRegionChange">
-          <view class="region-picker" :class="{ placeholder: !regionText }">
-            <text>{{ regionText || '请选择省/市/区' }}</text>
-            <text class="region-arrow">›</text>
-          </view>
-        </picker>
-      </view>
-
-      <view class="input-item">
         <text class="input-label">详细地址 <text class="required">*</text></text>
         <textarea
           v-model="form.detail"
@@ -62,7 +52,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import { createAddress, updateAddress, deleteAddress } from '@/api/address';
 import { isChinaMobile } from '@lv-cube/shared';
 
@@ -73,14 +63,9 @@ const addressId = ref<number | null>(null);
 const form = reactive({
   name: '',
   phone: '',
-  province: '',
-  city: '',
-  district: '',
   detail: '',
   isDefault: false,
 });
-const regionValue = computed(() => [form.province, form.city, form.district]);
-const regionText = computed(() => regionValue.value.filter(Boolean).join(' '));
 
 function goBack() {
   uni.navigateBack();
@@ -88,13 +73,6 @@ function goBack() {
 
 function handleSwitchChange(e: any) {
   form.isDefault = e.detail.value;
-}
-
-function handleRegionChange(e: any) {
-  const [province = '', city = '', district = ''] = e.detail.value || [];
-  form.province = province;
-  form.city = city;
-  form.district = district;
 }
 
 function validateForm() {
@@ -108,10 +86,6 @@ function validateForm() {
   }
   if (!isChinaMobile(form.phone)) {
     uni.showToast({ title: '请输入11位中国大陆手机号', icon: 'none' });
-    return false;
-  }
-  if (!form.province.trim() || !form.city.trim() || !form.district.trim()) {
-    uni.showToast({ title: '请填写完整的省市区', icon: 'none' });
     return false;
   }
   if (!form.detail.trim()) {
@@ -130,9 +104,9 @@ async function handleSave() {
       type: 'shipping',
       name: form.name,
       phone: form.phone,
-      province: form.province,
-      city: form.city,
-      district: form.district,
+      province: '',
+      city: '',
+      district: '',
       detail: form.detail,
       isDefault: form.isDefault,
     };
@@ -192,9 +166,6 @@ onMounted(() => {
         if (data) {
           form.name = data.name || '';
           form.phone = data.phone || '';
-          form.province = data.province || '';
-          form.city = data.city || '';
-          form.district = data.district || '';
           form.detail = data.detail || '';
           form.isDefault = !!data.isDefault;
         }
@@ -291,28 +262,6 @@ onMounted(() => {
     border-color: #2e7d32;
     background: #fff;
   }
-}
-
-.region-picker {
-  height: 80rpx;
-  padding: 0 16rpx;
-  border: 1rpx solid #e0e0e0;
-  border-radius: 8rpx;
-  font-size: 28rpx;
-  box-sizing: border-box;
-  background: #fafafa;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  &.placeholder {
-    color: #999;
-  }
-}
-
-.region-arrow {
-  color: #999;
-  font-size: 40rpx;
 }
 
 .textarea {

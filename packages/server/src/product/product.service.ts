@@ -8,15 +8,22 @@ import { QueryProductDto } from './dto/query-product.dto';
 export class ProductService {
   constructor(private prisma: PrismaService) {}
 
-  async create(supplierId: number, dto: CreateProductDto) {
-    const supplier = await this.prisma.supplierProfile.findUnique({ where: { userId: supplierId } });
-    if (!supplier || supplier.auditStatus !== 'approved') {
+  private async getApprovedSupplier(userId: number) {
+    const supplier = await this.prisma.supplierProfile.findUnique({ where: { userId } });
+    if (!supplier) {
+      throw new BadRequestException('供应商档案不存在，请先提交入驻申请');
+    }
+    if (supplier.auditStatus !== 'approved') {
       throw new ForbiddenException('供应商资质未通过审核，无法发布商品');
     }
+    return supplier;
+  }
 
+  async create(userId: number, dto: CreateProductDto) {
+    const supplier = await this.getApprovedSupplier(userId);
     return this.prisma.product.create({
       data: {
-        supplierId,
+        supplierId: supplier.id,
         categoryId: dto.categoryId,
         name: dto.name,
         subtitle: dto.subtitle,
@@ -119,10 +126,11 @@ export class ProductService {
     };
   }
 
-  async update(supplierId: number, id: number, dto: UpdateProductDto) {
+  async update(userId: number, id: number, dto: UpdateProductDto) {
+    const supplier = await this.getApprovedSupplier(userId);
     const product = await this.prisma.product.findUnique({ where: { id }, include: { skus: true } });
     if (!product) throw new BadRequestException('商品不存在');
-    if (product.supplierId !== supplierId) throw new ForbiddenException('无权修改他人商品');
+    if (product.supplierId !== supplier.id) throw new ForbiddenException('无权修改他人商品');
 
     const data: any = {};
     if (dto.categoryId !== undefined) data.categoryId = dto.categoryId;
@@ -156,26 +164,29 @@ export class ProductService {
     });
   }
 
-  async updateStatus(supplierId: number, id: number, status: string) {
+  async updateStatus(userId: number, id: number, status: string) {
+    const supplier = await this.getApprovedSupplier(userId);
     const product = await this.prisma.product.findUnique({ where: { id } });
     if (!product) throw new BadRequestException('商品不存在');
-    if (product.supplierId !== supplierId) throw new ForbiddenException('无权操作他人商品');
+    if (product.supplierId !== supplier.id) throw new ForbiddenException('无权操作他人商品');
     return this.prisma.product.update({ where: { id }, data: { status } });
   }
 
-  async remove(supplierId: number, id: number) {
+  async remove(userId: number, id: number) {
+    const supplier = await this.getApprovedSupplier(userId);
     const product = await this.prisma.product.findUnique({ where: { id } });
     if (!product) throw new BadRequestException('商品不存在');
-    if (product.supplierId !== supplierId) throw new ForbiddenException('无权删除他人商品');
+    if (product.supplierId !== supplier.id) throw new ForbiddenException('无权删除他人商品');
     await this.prisma.productSku.deleteMany({ where: { productId: id } });
     await this.prisma.product.delete({ where: { id } });
     return { success: true };
   }
 
-  async updateSkuStock(supplierId: number, skuId: number, stock: number) {
+  async updateSkuStock(userId: number, skuId: number, stock: number) {
+    const supplier = await this.getApprovedSupplier(userId);
     const sku = await this.prisma.productSku.findUnique({ where: { id: skuId }, include: { product: true } });
     if (!sku) throw new BadRequestException('SKU 不存在');
-    if (sku.product.supplierId !== supplierId) throw new ForbiddenException('无权操作');
+    if (sku.product.supplierId !== supplier.id) throw new ForbiddenException('无权操作');
     return this.prisma.productSku.update({ where: { id: skuId }, data: { stock } });
   }
 }

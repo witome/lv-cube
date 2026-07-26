@@ -13,9 +13,9 @@ export class ApplySupplierDto {
   @IsString()
   shopDesc?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  businessLicense: string;
+  businessLicense?: string;
 
   @IsOptional()
   @IsString()
