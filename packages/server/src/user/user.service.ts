@@ -178,6 +178,16 @@ export class UserService {
     for (const r of roles) {
       if (!validRoles.includes(r)) throw new BadRequestException(`无效角色: ${r}`);
     }
+    // 角色移除时清理对应档案
+    const user = await this.prisma.user.findUnique({ where: { id }, include: { supplier: true, driver: true } });
+    if (!user) throw new BadRequestException('用户不存在');
+    if (!roles.includes('supplier') && user.supplier) {
+      await this.prisma.supplierCategory.deleteMany({ where: { supplierId: user.supplier.id } });
+      await this.prisma.supplierProfile.delete({ where: { id: user.supplier.id } });
+    }
+    if (!roles.includes('driver') && user.driver) {
+      await this.prisma.driverProfile.delete({ where: { userId: id } });
+    }
     return this.prisma.user.update({ where: { id }, data: { roles: JSON.stringify(roles) } });
   }
 

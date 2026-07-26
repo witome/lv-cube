@@ -26,8 +26,9 @@ export function request<T = any>(options: RequestOptions): Promise<T> {
           if (body.code === 0) {
             resolve(body.data);
           } else {
-            uni.showToast({ title: body.message || '请求失败', icon: 'none' });
-            reject(new Error(body.message));
+            const errMsg = Array.isArray(body.message) ? body.message.join('；') : (body.message || '请求失败');
+            uni.showToast({ title: errMsg, icon: 'none' });
+            reject(new Error(errMsg));
           }
         } else if (res.statusCode === 401) {
           uni.removeStorageSync('token');
