@@ -3,6 +3,7 @@ kind: Template
 metadata:
   name: lv-cube
 spec:
+  templateType: inline
   title: '绿立方农批交易平台'
   categories:
     - backend
@@ -16,9 +17,6 @@ spec:
     app_name:
       type: string
       value: lv-cube-${{ random(6) }}
-    app_host:
-      type: string
-      value: lv-cube-${{ random(6) }}
     miniapp_host:
       type: string
       value: lv-cube-h5-${{ random(6) }}
@@ -28,12 +26,6 @@ spec:
     jwt_secret:
       type: string
       value: ${{ random(32) }}
-    db_password:
-      type: string
-      value: ${{ random(16) }}
-    redis_password:
-      type: string
-      value: ${{ random(16) }}
   inputs:
     admin_username:
       description: '运营后台管理员账号'
@@ -46,170 +38,8 @@ spec:
       default: '123456'
       required: true
 ---
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: ${{ defaults.app_name }}-mysql
-  labels:
-    sealos-db-provider-cr: ${{ defaults.app_name }}-mysql
-    app.kubernetes.io/instance: ${{ defaults.app_name }}-mysql
-    app.kubernetes.io/managed-by: kbcli
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: ${{ defaults.app_name }}-mysql
-  labels:
-    sealos-db-provider-cr: ${{ defaults.app_name }}-mysql
-    app.kubernetes.io/instance: ${{ defaults.app_name }}-mysql
-    app.kubernetes.io/managed-by: kbcli
-rules:
-  - apiGroups: ['*']
-    resources: ['*']
-    verbs: ['*']
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: ${{ defaults.app_name }}-mysql
-  labels:
-    sealos-db-provider-cr: ${{ defaults.app_name }}-mysql
-    app.kubernetes.io/instance: ${{ defaults.app_name }}-mysql
-    app.kubernetes.io/managed-by: kbcli
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: ${{ defaults.app_name }}-mysql
-subjects:
-  - kind: ServiceAccount
-    name: ${{ defaults.app_name }}-mysql
----
-apiVersion: apps.kubeblocks.io/v1alpha1
-kind: Cluster
-metadata:
-  name: ${{ defaults.app_name }}-mysql
-  labels:
-    sealos-db-provider-cr: ${{ defaults.app_name }}-mysql
-    app.kubernetes.io/instance: ${{ defaults.app_name }}-mysql
-    kb.io/database: apecloud-mysql-8.0.30
-    clusterdefinition.kubeblocks.io/name: apecloud-mysql
-spec:
-  clusterDefinitionRef: apecloud-mysql
-  clusterVersionRef: apecloud-mysql-8.0.30
-  terminationPolicy: Delete
-  affinity:
-    podAntiAffinity: Preferred
-    topologyKeys:
-      - kubernetes.io/hostname
-    tenancy: SharedNode
-  tolerations:
-    - key: svc
-      operator: Equal
-      effect: NoSchedule
-  componentSpecs:
-    - name: mysql
-      componentDefRef: mysql
-      replicas: 1
-      serviceAccountName: ${{ defaults.app_name }}-mysql
-      resources:
-        limits:
-          cpu: '500m'
-          memory: 512Mi
-        requests:
-          cpu: '50m'
-          memory: 51Mi
-      volumeClaimTemplates:
-        - name: data
-          spec:
-            accessModes:
-              - ReadWriteOnce
-            resources:
-              requests:
-                storage: 10Gi
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: ${{ defaults.app_name }}-redis
-  labels:
-    sealos-db-provider-cr: ${{ defaults.app_name }}-redis
-    app.kubernetes.io/instance: ${{ defaults.app_name }}-redis
-    app.kubernetes.io/managed-by: kbcli
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: ${{ defaults.app_name }}-redis
-  labels:
-    sealos-db-provider-cr: ${{ defaults.app_name }}-redis
-    app.kubernetes.io/instance: ${{ defaults.app_name }}-redis
-    app.kubernetes.io/managed-by: kbcli
-rules:
-  - apiGroups: ['*']
-    resources: ['*']
-    verbs: ['*']
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: ${{ defaults.app_name }}-redis
-  labels:
-    sealos-db-provider-cr: ${{ defaults.app_name }}-redis
-    app.kubernetes.io/instance: ${{ defaults.app_name }}-redis
-    app.kubernetes.io/managed-by: kbcli
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: ${{ defaults.app_name }}-redis
-subjects:
-  - kind: ServiceAccount
-    name: ${{ defaults.app_name }}-redis
----
-apiVersion: apps.kubeblocks.io/v1alpha1
-kind: Cluster
-metadata:
-  name: ${{ defaults.app_name }}-redis
-  labels:
-    sealos-db-provider-cr: ${{ defaults.app_name }}-redis
-    app.kubernetes.io/instance: ${{ defaults.app_name }}-redis
-    kb.io/database: redis-7.2.7
-    clusterdefinition.kubeblocks.io/name: redis
-spec:
-  clusterDefinitionRef: redis
-  clusterVersionRef: redis-7.2.7
-  terminationPolicy: Delete
-  affinity:
-    podAntiAffinity: Preferred
-    topologyKeys:
-      - kubernetes.io/hostname
-    tenancy: SharedNode
-  tolerations:
-    - key: svc
-      operator: Equal
-      effect: NoSchedule
-  componentSpecs:
-    - name: redis
-      componentDefRef: redis
-      replicas: 1
-      serviceAccountName: ${{ defaults.app_name }}-redis
-      resources:
-        limits:
-          cpu: '200m'
-          memory: 256Mi
-        requests:
-          cpu: '20m'
-          memory: 25Mi
-      volumeClaimTemplates:
-        - name: data
-          spec:
-            accessModes:
-              - ReadWriteOnce
-            resources:
-              requests:
-                storage: 5Gi
----
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: ${{ defaults.app_name }}-server
   labels:
@@ -222,6 +52,7 @@ metadata:
 spec:
   revisionHistoryLimit: 1
   replicas: 1
+  serviceName: ${{ defaults.app_name }}-server
   selector:
     matchLabels:
       app: ${{ defaults.app_name }}-server
@@ -231,8 +62,6 @@ spec:
         app: ${{ defaults.app_name }}-server
     spec:
       automountServiceAccountToken: false
-      imagePullSecrets:
-        - name: ${{ defaults.app_name }}-server
       containers:
         - name: ${{ defaults.app_name }}-server
           image: ghcr.io/witome/lv-cube-server:latest
@@ -247,24 +76,7 @@ spec:
             - name: JWT_SECRET
               value: ${{ defaults.jwt_secret }}
             - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: ${{ defaults.app_name }}-mysql-conn-credential
-                  key: endpoint
-            - name: DB_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: ${{ defaults.app_name }}-mysql-conn-credential
-                  key: username
-            - name: DB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: ${{ defaults.app_name }}-mysql-conn-credential
-                  key: password
-            - name: REDIS_HOST
-              value: ${{ defaults.app_name }}-redis-redis-redis.${{ SEALOS_NAMESPACE }}.svc.cluster.local
-            - name: REDIS_PORT
-              value: '6379'
+              value: file:/app/data/dev.db
             - name: ADMIN_USERNAME
               value: ${{ inputs.admin_username }}
             - name: ADMIN_PASSWORD
@@ -276,6 +88,21 @@ spec:
             limits:
               cpu: 500m
               memory: 512Mi
+          volumeMounts:
+            - name: vn-appvn-data
+              mountPath: /app/data
+  volumeClaimTemplates:
+    - metadata:
+        annotations:
+          path: /app/data
+          value: '1'
+        name: vn-appvn-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
 ---
 apiVersion: v1
 kind: Service
@@ -314,8 +141,6 @@ spec:
         app: ${{ defaults.app_name }}-miniapp
     spec:
       automountServiceAccountToken: false
-      imagePullSecrets:
-        - name: ${{ defaults.app_name }}-miniapp
       containers:
         - name: ${{ defaults.app_name }}-miniapp
           image: ghcr.io/witome/lv-cube-miniapp:latest
@@ -370,8 +195,6 @@ spec:
         app: ${{ defaults.app_name }}-admin
     spec:
       automountServiceAccountToken: false
-      imagePullSecrets:
-        - name: ${{ defaults.app_name }}-admin
       containers:
         - name: ${{ defaults.app_name }}-admin
           image: ghcr.io/witome/lv-cube-admin:latest

@@ -16,13 +16,13 @@ FROM node:20-alpine AS runner
 
 WORKDIR /app
 
-RUN npm install -g pnpm@9
+RUN npm install -g pnpm@9 && mkdir -p /app/data
 
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/pnpm-workspace.yaml ./
 COPY --from=builder /app/packages/shared ./packages/shared
 COPY --from=builder /app/packages/server/dist ./packages/server/dist
-COPY --from=builder /app/packages/server/src/prisma ./packages/server/src/prisma
+COPY --from=builder /app/packages/server/prisma ./packages/server/prisma
 COPY --from=builder /app/packages/server/package.json ./packages/server/package.json
 COPY --from=builder /app/packages/server/node_modules ./packages/server/node_modules
 COPY --from=builder /app/node_modules ./node_modules
@@ -31,4 +31,4 @@ WORKDIR /app/packages/server
 
 EXPOSE 3000
 
-CMD ["node", "dist/main"]
+CMD ["sh", "-c", "pnpm prisma db push && node dist/main"]
