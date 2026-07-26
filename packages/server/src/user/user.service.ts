@@ -105,7 +105,13 @@ export class UserService {
       }),
       this.prisma.user.count({ where }),
     ]);
-    return { list, total, page, pageSize };
+    const filteredList = role
+      ? list.filter((u: any) => {
+          const roles = JSON.parse(u.roles || '["buyer"]');
+          return roles.includes(role);
+        })
+      : list;
+    return { list: filteredList, total: role ? filteredList.length : total, page, pageSize };
   }
 
   async findPendingSuppliers() {
@@ -122,5 +128,44 @@ export class UserService {
       include: { user: true },
       orderBy: { createdAt: 'asc' },
     });
+  }
+
+  async updateStatus(id: number, status: string) {
+    if (!['active', 'disabled'].includes(status)) throw new BadRequestException('无效状态');
+    return this.prisma.user.update({ where: { id }, data: { status } });
+  }
+
+  async updateRoles(id: number, roles: string[]) {
+    const validRoles = ['buyer', 'supplier', 'driver', 'admin'];
+    for (const r of roles) {
+      if (!validRoles.includes(r)) throw new BadRequestException(`无效角色: ${r}`);
+    }
+    return this.prisma.user.update({ where: { id }, data: { roles: JSON.stringify(roles) } });
+  }
+
+  async deleteUser(id: number) {
+    await this.prisma.user.delete({ where: { id } });
+    return { success: true };
+  }
+
+  async createUser(dto: any) {
+    const { phone, nickname, password, roles } = dto;
+    if (!phone || !nickname) throw new BadRequestException('手机号和昵称必填');
+    const existing = await this.prisma.user.findUnique({ where: { phone } });
+    if (existing) throw new BadRequestException('手机号已存在');
+    const userRoles = roles?.length ? roles : ['buyer'];
+    const passwordHash = password ? this.hashPassword(password) : null;
+    return this.prisma.user.create({
+      data: {
+        phone,
+        nickname,
+        passwordHash,
+        roles: JSON.stringify(userRoles),
+      },
+    });
+  }
+
+  private hashPassword(password: string): string {
+    return Buffer.from(password).toString('base64');
   }
 }

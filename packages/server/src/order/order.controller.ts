@@ -30,10 +30,16 @@ export class OrderController {
     return this.orderService.findBySupplier(req.user.id, query);
   }
 
+  @Get('admin/list')
+  @ApiOperation({ summary: '[管理员] 订单列表' })
+  findAll(@Query() params: any) {
+    return this.orderService.findAll(params);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: '订单详情' })
   findOne(@Request() req: any, @Param('id') id: string) {
-    return this.orderService.findOne(req.user.id, Number(id));
+    return this.orderService.findOne(req.user.id, Number(id), req.user.roles);
   }
 
   @Patch(':id/accept')

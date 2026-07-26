@@ -28,6 +28,12 @@ export class RefundController {
     return this.refundService.findBySupplier(req.user.id, status);
   }
 
+  @Get('admin/list')
+  @ApiOperation({ summary: '[管理员] 退款列表' })
+  findAll(@Query() params: any) {
+    return this.refundService.findAll(params);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: '退款详情' })
   findOne(@Param('id') id: string) {

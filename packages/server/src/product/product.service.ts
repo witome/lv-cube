@@ -120,18 +120,39 @@ export class ProductService {
   }
 
   async update(supplierId: number, id: number, dto: UpdateProductDto) {
-    const product = await this.prisma.product.findUnique({ where: { id } });
+    const product = await this.prisma.product.findUnique({ where: { id }, include: { skus: true } });
     if (!product) throw new BadRequestException('商品不存在');
     if (product.supplierId !== supplierId) throw new ForbiddenException('无权修改他人商品');
 
-    const data: any = { ...dto };
-    if (dto.mainImages) data.mainImages = JSON.stringify(dto.mainImages);
-    if (dto.attrValues) data.attrValues = JSON.stringify(dto.attrValues);
+    const data: any = {};
+    if (dto.categoryId !== undefined) data.categoryId = dto.categoryId;
+    if (dto.name !== undefined) data.name = dto.name;
+    if (dto.subtitle !== undefined) data.subtitle = dto.subtitle;
+    if (dto.mainImages !== undefined) data.mainImages = JSON.stringify(dto.mainImages);
+    if (dto.description !== undefined) data.description = dto.description;
+    if (dto.attrValues !== undefined) data.attrValues = JSON.stringify(dto.attrValues);
+    if (dto.status !== undefined) data.status = dto.status;
 
-    return this.prisma.product.update({
-      where: { id },
-      data,
-      include: { skus: true },
+    return this.prisma.$transaction(async (prisma) => {
+      if (dto.skus && dto.skus.length > 0) {
+        await prisma.productSku.deleteMany({ where: { productId: id } });
+        data.skus = {
+          create: dto.skus.map((sku) => ({
+            skuName: sku.skuName,
+            price: sku.price,
+            originalPrice: sku.originalPrice,
+            stock: sku.stock,
+            weight: sku.weight,
+            specValues: sku.specValues ? JSON.stringify(sku.specValues) : undefined,
+          })),
+        };
+      }
+
+      return prisma.product.update({
+        where: { id },
+        data,
+        include: { skus: true, category: true },
+      });
     });
   }
 

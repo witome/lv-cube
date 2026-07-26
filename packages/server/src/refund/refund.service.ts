@@ -99,4 +99,25 @@ export class RefundService {
       orderBy: { createdAt: 'desc' },
     });
   }
+
+  async findAll(params: any) {
+    const page = Number(params.page) || 1;
+    const pageSize = Number(params.pageSize) || 20;
+    const { status } = params;
+    const where: any = {};
+    if (status) where.status = status;
+    const [list, total] = await Promise.all([
+      this.prisma.refund.findMany({
+        where,
+        include: {
+          order: { include: { items: true, buyer: { select: { nickname: true, phone: true } } } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      this.prisma.refund.count({ where }),
+    ]);
+    return { list, total, page, pageSize };
+  }
 }

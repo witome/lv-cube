@@ -14,6 +14,7 @@ import { SettlementModule } from './settlement/settlement.module';
 import { DeliveryModule } from './delivery/delivery.module';
 import { RefundModule } from './refund/refund.module';
 import { MessageModule } from './message/message.module';
+import { UploadModule } from './upload/upload.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { MessageModule } from './message/message.module';
     DeliveryModule,
     RefundModule,
     MessageModule,
+    UploadModule,
   ],
 })
 export class AppModule {}

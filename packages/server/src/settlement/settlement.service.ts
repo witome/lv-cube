@@ -78,15 +78,23 @@ export class SettlementService {
     return account;
   }
 
-  async getSettlements(userId: number, role: string, params: any) {
+  async getSettlements(userId: number, role: string, params: any, userRoles?: string[]) {
     const page = Number(params.page) || 1;
     const pageSize = Number(params.pageSize) || 20;
     const skip = (page - 1) * pageSize;
     const where: any = {};
-    if (role === 'supplier') where.supplierId = userId;
-    if (role === 'driver') where.driverId = userId;
+    const isAdmin = userRoles?.includes('admin');
+    if (!isAdmin) {
+      if (role === 'supplier') where.supplierId = userId;
+      if (role === 'driver') where.driverId = userId;
+    }
     const [list, total] = await Promise.all([
-      this.prisma.settlement.findMany({ where, skip, take: pageSize, orderBy: { createdAt: 'desc' } }),
+      this.prisma.settlement.findMany({
+        where,
+        skip,
+        take: pageSize,
+        orderBy: { createdAt: 'desc' },
+      }),
       this.prisma.settlement.count({ where }),
     ]);
     return { list, total, page, pageSize };
@@ -115,13 +123,23 @@ export class SettlementService {
     });
   }
 
-  async getWithdrawals(userId: number, params: any) {
+  async getWithdrawals(userId: number, params: any, userRoles?: string[]) {
     const page = Number(params.page) || 1;
     const pageSize = Number(params.pageSize) || 20;
     const skip = (page - 1) * pageSize;
+    const isAdmin = userRoles?.includes('admin');
+    const where: any = isAdmin ? {} : { userId };
     const [list, total] = await Promise.all([
-      this.prisma.withdraw.findMany({ where: { userId }, skip, take: pageSize, orderBy: { createdAt: 'desc' } }),
-      this.prisma.withdraw.count({ where: { userId } }),
+      this.prisma.withdraw.findMany({
+        where,
+        skip,
+        take: pageSize,
+        include: {
+          user: { select: { nickname: true, phone: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.withdraw.count({ where }),
     ]);
     return { list, total, page, pageSize };
   }

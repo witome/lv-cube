@@ -135,7 +135,32 @@ export class OrderService {
     return { list, total, page, pageSize };
   }
 
-  async findOne(userId: number, id: number) {
+  async findAll(params: any) {
+    const page = Number(params.page) || 1;
+    const pageSize = Number(params.pageSize) || 20;
+    const { status, orderNo } = params;
+    const skip = (page - 1) * pageSize;
+    const where: any = {};
+    if (status) where.status = status;
+    if (orderNo) where.orderNo = { contains: orderNo };
+    const [list, total] = await Promise.all([
+      this.prisma.order.findMany({
+        where,
+        skip,
+        take: pageSize,
+        include: {
+          items: true,
+          buyer: { select: { nickname: true, phone: true } },
+          supplier: { select: { nickname: true, phone: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.order.count({ where }),
+    ]);
+    return { list, total, page, pageSize };
+  }
+
+  async findOne(userId: number, id: number, roles?: string[]) {
     const order = await this.prisma.order.findUnique({
       where: { id },
       include: {
@@ -145,7 +170,8 @@ export class OrderService {
       },
     });
     if (!order) throw new BadRequestException('订单不存在');
-    if (order.buyerId !== userId && order.supplierId !== userId) {
+    const isAdmin = roles?.includes('admin');
+    if (!isAdmin && order.buyerId !== userId && order.supplierId !== userId) {
       throw new ForbiddenException('无权查看');
     }
     return order;

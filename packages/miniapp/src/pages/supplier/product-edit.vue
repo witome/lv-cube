@@ -87,12 +87,11 @@
               <image class="image-preview" :src="img" mode="aspectFill" />
               <view class="image-remove" @click="removeImage(idx)">×</view>
             </view>
-            <view v-if="formData.mainImages.length < 5" class="image-add" @click="showImageInput = true">
+            <view v-if="formData.mainImages.length < 5" class="image-add" @click="chooseAndUploadImage">
               <text class="add-icon">+</text>
-              <text class="add-text">添加图片</text>
+              <text class="add-text">{{ uploading ? '上传中...' : '添加图片' }}</text>
             </view>
           </view>
-          <view class="image-tip">MVP 版本请输入图片链接</view>
         </view>
         <view class="form-item">
           <view class="form-label">商品描述</view>
@@ -221,20 +220,6 @@
         提交保存
       </view>
     </view>
-
-    <view v-if="showImageInput" class="modal-mask" @click="showImageInput = false">
-      <view class="modal-content" @click.stop>
-        <view class="modal-title">添加图片链接</view>
-        <input
-          class="form-input"
-          v-model="newImageUrl"
-          placeholder="请输入图片 URL" />
-        <view class="modal-actions">
-          <view class="modal-btn cancel" @click="showImageInput = false">取消</view>
-          <view class="modal-btn confirm" @click="addImage">确定</view>
-        </view>
-      </view>
-    </view>
   </view>
 </template>
 
@@ -243,6 +228,7 @@ import { ref, computed, reactive, onMounted } from 'vue';
 import { getCategoryTree } from '@/api/category';
 import { getProductDetail } from '@/api/product';
 import { createProduct, updateProduct } from '@/api/supplier-product';
+import { uploadImage } from '@/api/upload';
 
 const steps = [
   { label: '选择品类' },
@@ -257,8 +243,7 @@ const categoryTree = ref<any[]>([]);
 const selectedLevel1 = ref<number | null>(null);
 const selectedLevel2 = ref<number | null>(null);
 const selectedLevel3 = ref<number | null>(null);
-const showImageInput = ref(false);
-const newImageUrl = ref('');
+const uploading = ref(false);
 
 const formData = reactive({
   categoryId: 0,
@@ -360,12 +345,36 @@ function selectLevel3(cat: any) {
   formData.categoryId = cat.id;
 }
 
-function addImage() {
-  if (newImageUrl.value.trim()) {
-    formData.mainImages.push(newImageUrl.value.trim());
-    newImageUrl.value = '';
+async function chooseAndUploadImage() {
+  if (uploading.value) return;
+  const remaining = 5 - formData.mainImages.length;
+  if (remaining <= 0) {
+    uni.showToast({ title: '最多上传5张图片', icon: 'none' });
+    return;
   }
-  showImageInput.value = false;
+  try {
+    const res: any = await new Promise((resolve, reject) => {
+      uni.chooseImage({
+        count: remaining,
+        sizeType: ['compressed'],
+        sourceType: ['album', 'camera'],
+        success: resolve,
+        fail: reject,
+      });
+    });
+    uploading.value = true;
+    for (const path of res.tempFilePaths) {
+      const result = await uploadImage(path);
+      const BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/api$/, '');
+      const fullUrl = result.url.startsWith('http') ? result.url : `${BASE_URL}${result.url}`;
+      formData.mainImages.push(fullUrl);
+    }
+    uni.showToast({ title: '上传成功', icon: 'success' });
+  } catch (e) {
+    console.error('上传图片失败', e);
+  } finally {
+    uploading.value = false;
+  }
 }
 
 function removeImage(idx: number) {

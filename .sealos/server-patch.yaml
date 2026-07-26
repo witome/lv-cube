@@ -1,0 +1,24 @@
+spec:
+  template:
+    spec:
+      containers:
+        - name: lv-cube-server
+          command:
+            - sh
+            - -c
+            - >
+              cd /app/packages/server &&
+              if [ -d /app/data/dist ]; then
+                cp -r /app/data/dist/* /app/packages/server/dist/;
+              fi;
+              pnpm prisma db push &&
+              node dist/main
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+              ephemeral-storage: 1Gi
+            requests:
+              cpu: 50m
+              memory: 128Mi
+              ephemeral-storage: 100Mi

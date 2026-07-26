@@ -21,6 +21,7 @@
         <el-form-item>
           <el-button type="primary" @click="handleSearch">搜索</el-button>
           <el-button @click="handleReset">重置</el-button>
+          <el-button type="success" @click="openCreateDialog">添加用户</el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -35,19 +36,35 @@
         </el-table-column>
         <el-table-column prop="nickname" label="昵称" />
         <el-table-column prop="phone" label="手机号" />
-        <el-table-column prop="role" label="角色" width="100">
+        <el-table-column label="角色" width="180">
           <template #default="{ row }">
-            <el-tag :type="getRoleTagType(row.role)">{{ getRoleText(row.role) }}</el-tag>
+            <div v-for="r in getUserRoles(row.roles)" :key="r" class="role-tag">
+              <el-tag :type="getRoleTagType(r)" size="small">{{ getRoleText(r) }}</el-tag>
+            </div>
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="row.status === 1 ? 'success' : 'danger'">
-              {{ row.status === 1 ? '正常' : '禁用' }}
+            <el-tag :type="row.status === 'active' ? 'success' : 'danger'">
+              {{ row.status === 'active' ? '正常' : '禁用' }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="createdAt" label="注册时间" width="180" />
+        <el-table-column label="操作" width="280" fixed="right">
+          <template #default="{ row }">
+            <el-button size="small" type="primary" link @click="openRoleDialog(row)">角色</el-button>
+            <el-button
+              size="small"
+              :type="row.status === 'active' ? 'warning' : 'success'"
+              link
+              @click="handleToggleStatus(row)"
+            >
+              {{ row.status === 'active' ? '禁用' : '启用' }}
+            </el-button>
+            <el-button size="small" type="danger" link @click="handleDelete(row)">删除</el-button>
+          </template>
+        </el-table-column>
       </el-table>
 
       <el-pagination
@@ -61,12 +78,62 @@
         @current-change="fetchList"
       />
     </el-card>
+
+    <el-dialog v-model="roleDialogVisible" title="编辑角色" width="400px">
+      <el-form label-width="80px">
+        <el-form-item label="角色">
+          <el-checkbox-group v-model="editRoles">
+            <el-checkbox label="admin">管理员</el-checkbox>
+            <el-checkbox label="supplier">供应商</el-checkbox>
+            <el-checkbox label="driver">司机</el-checkbox>
+            <el-checkbox label="buyer">采购商</el-checkbox>
+          </el-checkbox-group>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="roleDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleSaveRoles">保存</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="createDialogVisible" title="添加用户" width="400px">
+      <el-form :model="createForm" label-width="80px">
+        <el-form-item label="手机号" required>
+          <el-input v-model="createForm.phone" placeholder="请输入手机号" />
+        </el-form-item>
+        <el-form-item label="昵称" required>
+          <el-input v-model="createForm.nickname" placeholder="请输入昵称" />
+        </el-form-item>
+        <el-form-item label="密码">
+          <el-input v-model="createForm.password" placeholder="默认123456" show-password />
+        </el-form-item>
+        <el-form-item label="角色">
+          <el-checkbox-group v-model="createForm.roles">
+            <el-checkbox label="admin">管理员</el-checkbox>
+            <el-checkbox label="supplier">供应商</el-checkbox>
+            <el-checkbox label="driver">司机</el-checkbox>
+            <el-checkbox label="buyer">采购商</el-checkbox>
+          </el-checkbox-group>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="createDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleCreateUser">创建</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue';
-import { getUserList } from '@/api/user';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import {
+  getUserList,
+  updateUserStatus,
+  updateUserRoles,
+  deleteUser,
+  createUser,
+} from '@/api/user';
 
 const loading = ref(false);
 const tableData = ref<any[]>([]);
@@ -81,6 +148,26 @@ const pagination = reactive({
   pageSize: 10,
   total: 0,
 });
+
+const roleDialogVisible = ref(false);
+const editRoles = ref<string[]>([]);
+let editingUserId: number | null = null;
+
+const createDialogVisible = ref(false);
+const createForm = reactive({
+  phone: '',
+  nickname: '',
+  password: '123456',
+  roles: ['buyer'] as string[],
+});
+
+function getUserRoles(rolesStr: string) {
+  try {
+    return JSON.parse(rolesStr || '["buyer"]');
+  } catch {
+    return ['buyer'];
+  }
+}
 
 function getRoleText(role: string) {
   const map: Record<string, string> = {
@@ -129,6 +216,83 @@ function handleReset() {
   handleSearch();
 }
 
+function openRoleDialog(row: any) {
+  editingUserId = row.id;
+  editRoles.value = [...getUserRoles(row.roles)];
+  roleDialogVisible.value = true;
+}
+
+async function handleSaveRoles() {
+  if (!editingUserId) return;
+  try {
+    await updateUserRoles(editingUserId, editRoles.value);
+    ElMessage.success('角色更新成功');
+    roleDialogVisible.value = false;
+    fetchList();
+  } catch (e: any) {
+    ElMessage.error(e?.message || '更新失败');
+  }
+}
+
+async function handleToggleStatus(row: any) {
+  const newStatus = row.status === 'active' ? 'disabled' : 'active';
+  try {
+    await ElMessageBox.confirm(
+      `确定要${newStatus === 'active' ? '启用' : '禁用'}用户 ${row.nickname} 吗？`,
+      '提示',
+      { type: 'warning' },
+    );
+    await updateUserStatus(row.id, newStatus);
+    ElMessage.success('状态更新成功');
+    fetchList();
+  } catch {
+    // cancel
+  }
+}
+
+async function handleDelete(row: any) {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除用户 ${row.nickname} 吗？此操作不可恢复！`,
+      '警告',
+      { type: 'error' },
+    );
+    await deleteUser(row.id);
+    ElMessage.success('删除成功');
+    fetchList();
+  } catch {
+    // cancel
+  }
+}
+
+function openCreateDialog() {
+  createForm.phone = '';
+  createForm.nickname = '';
+  createForm.password = '123456';
+  createForm.roles = ['buyer'];
+  createDialogVisible.value = true;
+}
+
+async function handleCreateUser() {
+  if (!createForm.phone || !createForm.nickname) {
+    ElMessage.warning('请填写手机号和昵称');
+    return;
+  }
+  try {
+    await createUser({
+      phone: createForm.phone,
+      nickname: createForm.nickname,
+      password: createForm.password,
+      roles: createForm.roles,
+    });
+    ElMessage.success('创建成功');
+    createDialogVisible.value = false;
+    fetchList();
+  } catch (e: any) {
+    ElMessage.error(e?.message || '创建失败');
+  }
+}
+
 onMounted(fetchList);
 </script>
 
@@ -143,6 +307,12 @@ onMounted(fetchList);
       margin-top: 16px;
       justify-content: flex-end;
       display: flex;
+    }
+
+    .role-tag {
+      display: inline-block;
+      margin-right: 4px;
+      margin-bottom: 4px;
     }
   }
 }

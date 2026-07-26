@@ -69,4 +69,10 @@ export class DeliveryController {
   assignOwn(@Request() req: any, @Param('orderId') orderId: string, @Body('driverId') driverId: number) {
     return this.deliveryService.assignOwnDriver(req.user.id, Number(orderId), driverId);
   }
+
+  @Get('admin/list')
+  @ApiOperation({ summary: '[管理员] 配送任务列表' })
+  findAll(@Query() params: any) {
+    return this.deliveryService.findAll(params);
+  }
 }

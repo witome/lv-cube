@@ -20,7 +20,7 @@ export class SettlementController {
   @Get('list')
   @ApiOperation({ summary: '结算记录' })
   getSettlements(@Request() req: any, @Query() query: any) {
-    return this.settlementService.getSettlements(req.user.id, req.user.currentRole || 'supplier', query);
+    return this.settlementService.getSettlements(req.user.id, req.user.currentRole || 'supplier', query, req.user.roles);
   }
 
   @Post('withdraw')
@@ -32,6 +32,6 @@ export class SettlementController {
   @Get('withdrawals')
   @ApiOperation({ summary: '提现记录' })
   getWithdrawals(@Request() req: any, @Query() query: any) {
-    return this.settlementService.getWithdrawals(req.user.id, query);
+    return this.settlementService.getWithdrawals(req.user.id, query, req.user.roles);
   }
 }

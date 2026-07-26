@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Request, Get, Param, Patch, Query } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request, Get, Param, Patch, Query, Delete } from '@nestjs/common';
 import { UserService } from './user.service';
 import { ApplySupplierDto } from './dto/apply-supplier.dto';
 import { ApplyDriverDto } from './dto/apply-driver.dto';
@@ -73,5 +73,37 @@ export class UserController {
   @ApiOperation({ summary: '[运营] 审核司机入驻' })
   reviewDriver(@Param('id') id: string, @Body() dto: ReviewDto) {
     return this.userService.reviewDriver(Number(id), dto);
+  }
+
+  @Patch(':id/status')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '[运营] 更新用户状态' })
+  updateStatus(@Param('id') id: string, @Body('status') status: string) {
+    return this.userService.updateStatus(Number(id), status);
+  }
+
+  @Patch(':id/roles')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '[运营] 更新用户角色' })
+  updateRoles(@Param('id') id: string, @Body('roles') roles: string[]) {
+    return this.userService.updateRoles(Number(id), roles);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '[运营] 删除用户' })
+  deleteUser(@Param('id') id: string) {
+    return this.userService.deleteUser(Number(id));
+  }
+
+  @Post()
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '[运营] 创建用户' })
+  createUser(@Body() dto: any) {
+    return this.userService.createUser(dto);
   }
 }

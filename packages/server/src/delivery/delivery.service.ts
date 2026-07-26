@@ -147,4 +147,28 @@ export class DeliveryService {
     await this.prisma.ownedDriver.delete({ where: { id: driverId } });
     return { success: true };
   }
+
+  async findAll(params: any) {
+    const page = Number(params.page) || 1;
+    const pageSize = Number(params.pageSize) || 20;
+    const { status, type } = params;
+    const where: any = {};
+    if (status) where.status = status;
+    if (type) where.type = type;
+    const [list, total] = await Promise.all([
+      this.prisma.delivery.findMany({
+        where,
+        include: {
+          order: true,
+          driver: { include: { user: { select: { nickname: true, phone: true } } } },
+          supplier: { include: { user: { select: { nickname: true, phone: true } } } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      this.prisma.delivery.count({ where }),
+    ]);
+    return { list, total, page, pageSize };
+  }
 }
