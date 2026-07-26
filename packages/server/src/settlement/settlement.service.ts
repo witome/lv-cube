@@ -85,7 +85,10 @@ export class SettlementService {
     const where: any = {};
     const isAdmin = userRoles?.includes('admin');
     if (!isAdmin) {
-      if (role === 'supplier') where.supplierId = userId;
+      if (role === 'supplier') {
+        const profile = await this.prisma.supplierProfile.findUnique({ where: { userId } });
+        if (profile) where.supplierId = profile.id;
+      }
       if (role === 'driver') where.driverId = userId;
     }
     const [list, total] = await Promise.all([

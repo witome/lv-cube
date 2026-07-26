@@ -52,10 +52,12 @@ export class RefundService {
     return refund;
   }
 
-  async approve(supplierId: number, refundId: number) {
+  async approve(userId: number, refundId: number) {
     const refund = await this.prisma.refund.findUnique({ where: { id: refundId } });
     if (!refund) throw new BadRequestException('退款申请不存在');
-    if (refund.supplierId !== supplierId) throw new ForbiddenException('无权操作');
+    const profile = await this.prisma.supplierProfile.findUnique({ where: { userId } });
+    if (!profile) throw new BadRequestException('供应商档案不存在');
+    if (refund.supplierId !== profile.id) throw new ForbiddenException('无权操作');
     if (refund.status !== 'pending') throw new BadRequestException('退款申请状态不正确');
 
     const account = await this.prisma.userAccount.findUnique({
@@ -78,10 +80,12 @@ export class RefundService {
     });
   }
 
-  async reject(supplierId: number, refundId: number, reason: string) {
+  async reject(userId: number, refundId: number, reason: string) {
     const refund = await this.prisma.refund.findUnique({ where: { id: refundId } });
     if (!refund) throw new BadRequestException('退款申请不存在');
-    if (refund.supplierId !== supplierId) throw new ForbiddenException('无权操作');
+    const profile = await this.prisma.supplierProfile.findUnique({ where: { userId } });
+    if (!profile) throw new BadRequestException('供应商档案不存在');
+    if (refund.supplierId !== profile.id) throw new ForbiddenException('无权操作');
     if (refund.status !== 'pending') throw new BadRequestException('退款申请状态不正确');
 
     return this.prisma.refund.update({

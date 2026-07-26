@@ -14,10 +14,12 @@ export class DeliveryService {
     return Math.round((baseFee + Math.max(0, distanceKm - 3) * perKm) * 100) / 100;
   }
 
-  async createDelivery(orderId: number, supplierId: number) {
+  async createDelivery(orderId: number, userId: number) {
     const order = await this.prisma.order.findUnique({ where: { id: orderId } });
     if (!order) throw new BadRequestException('订单不存在');
-    if (order.supplierId !== supplierId) throw new ForbiddenException('无权操作');
+    const profile = await this.prisma.supplierProfile.findUnique({ where: { userId } });
+    if (!profile) throw new BadRequestException('供应商档案不存在');
+    if (order.supplierId !== profile.id) throw new ForbiddenException('无权操作');
 
     const existing = await this.prisma.delivery.findUnique({ where: { orderId } });
     if (existing) return existing;
@@ -28,7 +30,7 @@ export class DeliveryService {
     return this.prisma.delivery.create({
       data: {
         orderId,
-        supplierId,
+        supplierId: profile.id,
         type: 'platform',
         status: 'pending',
         pickupAddress: '供应商仓库地址',
@@ -106,12 +108,14 @@ export class DeliveryService {
     });
   }
 
-  async assignOwnDriver(supplierId: number, orderId: number, driverId: number) {
+  async assignOwnDriver(userId: number, orderId: number, driverId: number) {
     const order = await this.prisma.order.findUnique({ where: { id: orderId } });
-    if (!order || order.supplierId !== supplierId) throw new ForbiddenException('无权操作');
+    const profile = await this.prisma.supplierProfile.findUnique({ where: { userId } });
+    if (!profile) throw new BadRequestException('供应商档案不存在');
+    if (!order || order.supplierId !== profile.id) throw new ForbiddenException('无权操作');
 
     const ownedDriver = await this.prisma.ownedDriver.findFirst({
-      where: { id: driverId, supplierId },
+      where: { id: driverId, supplierId: profile.id },
     });
     if (!ownedDriver) throw new BadRequestException('自有司机不存在');
 
@@ -123,7 +127,7 @@ export class DeliveryService {
       update: { driverId, type: 'own', status: 'accepted', acceptedAt: new Date() },
       create: {
         orderId,
-        supplierId,
+        supplierId: profile.id,
         driverId,
         type: 'own',
         status: 'accepted',
@@ -134,21 +138,27 @@ export class DeliveryService {
     });
   }
 
-  async manageOwnDrivers(supplierId: number) {
-    return this.prisma.ownedDriver.findMany({ where: { supplierId }, orderBy: { createdAt: 'desc' } });
+  async manageOwnDrivers(userId: number) {
+    const profile = await this.prisma.supplierProfile.findUnique({ where: { userId } });
+    if (!profile) throw new BadRequestException('供应商档案不存在');
+    return this.prisma.ownedDriver.findMany({ where: { supplierId: profile.id }, orderBy: { createdAt: 'desc' } });
   }
 
-  async addOwnDriver(supplierId: number, data: any) {
+  async addOwnDriver(userId: number, data: any) {
+    const profile = await this.prisma.supplierProfile.findUnique({ where: { userId } });
+    if (!profile) throw new BadRequestException('供应商档案不存在');
     if (!data?.name?.trim()) throw new BadRequestException('司机姓名必填');
     if (!isChinaMobile(data?.phone || '')) {
       throw new BadRequestException('手机号必须为11位中国大陆手机号');
     }
-    return this.prisma.ownedDriver.create({ data: { supplierId, ...data } });
+    return this.prisma.ownedDriver.create({ data: { supplierId: profile.id, ...data } });
   }
 
-  async removeOwnDriver(supplierId: number, driverId: number) {
+  async removeOwnDriver(userId: number, driverId: number) {
+    const profile = await this.prisma.supplierProfile.findUnique({ where: { userId } });
+    if (!profile) throw new BadRequestException('供应商档案不存在');
     const driver = await this.prisma.ownedDriver.findUnique({ where: { id: driverId } });
-    if (!driver || driver.supplierId !== supplierId) throw new ForbiddenException('无权操作');
+    if (!driver || driver.supplierId !== profile.id) throw new ForbiddenException('无权操作');
     await this.prisma.ownedDriver.delete({ where: { id: driverId } });
     return { success: true };
   }
