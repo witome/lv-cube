@@ -1,5 +1,6 @@
 import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { MessageService } from '../message/message.service';
 import { ApplySupplierDto } from './dto/apply-supplier.dto';
 import { ApplyDriverDto } from './dto/apply-driver.dto';
 import { ReviewDto } from './dto/review.dto';
@@ -7,7 +8,10 @@ import { isChinaMobile } from '../common/validation/phone';
 
 @Injectable()
 export class UserService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private messageService: MessageService,
+  ) {}
 
   async switchRole(userId: number, targetRole: string) {
     const validRoles = ['buyer', 'supplier', 'driver', 'admin'];
@@ -106,6 +110,17 @@ export class UserService {
 
       return reviewed;
     });
+
+    // 发送审核通知
+    const roleLabel = role === 'supplier' ? '供应商' : '司机';
+    await this.messageService.create(
+      profile.userId,
+      'system',
+      `${roleLabel}申请${dto.approved ? '通过' : '未通过'}`,
+      dto.approved
+        ? `您的${roleLabel}入驻申请已审核通过，现在可以使用${roleLabel}功能了。`
+        : `您的${roleLabel}入驻申请未通过审核。原因：${dto.remark || '未填写'}`
+    );
   }
 
   async findAllUsers(params: { page?: number; pageSize?: number; keyword?: string; role?: string }) {

@@ -1,11 +1,15 @@
 import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { MessageService } from '../message/message.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { QueryOrderDto } from './dto/query-order.dto';
 
 @Injectable()
 export class OrderService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private messageService: MessageService,
+  ) {}
 
   async create(buyerId: number, dto: CreateOrderDto) {
     const address = await this.prisma.address.findUnique({ where: { id: dto.addressId } });
