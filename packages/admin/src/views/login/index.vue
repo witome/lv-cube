@@ -28,9 +28,11 @@
 import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage, FormInstance, FormRules } from 'element-plus';
+import { login } from '@/api/auth';
 
 const router = useRouter();
 const formRef = ref<FormInstance>();
+const loading = ref(false);
 
 const form = reactive({
   username: '',
@@ -42,12 +44,20 @@ const rules: FormRules = {
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
 };
 
-function handleLogin() {
-  formRef.value?.validate((valid) => {
+async function handleLogin() {
+  formRef.value?.validate(async (valid) => {
     if (valid) {
-      localStorage.setItem('token', 'mock-token');
-      ElMessage.success('登录成功');
-      router.push('/dashboard');
+      loading.value = true;
+      try {
+        const res: any = await login(form);
+        localStorage.setItem('token', res.accessToken || res);
+        ElMessage.success('登录成功');
+        router.push('/dashboard');
+      } catch (e: any) {
+        ElMessage.error(e?.message || '登录失败，默认账号：admin / 123456');
+      } finally {
+        loading.value = false;
+      }
     }
   });
 }

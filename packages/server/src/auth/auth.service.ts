@@ -40,6 +40,25 @@ export class AuthService {
     return this.generateToken(user.id, user.phone);
   }
 
+  async adminLogin(username: string, password: string) {
+    if (username === 'admin' && password === '123456') {
+      let admin = await this.prisma.user.findUnique({ where: { phone: 'admin' } });
+      if (!admin) {
+        const passwordHash = await bcrypt.hash('123456', 10);
+        admin = await this.prisma.user.create({
+          data: {
+            phone: 'admin',
+            passwordHash,
+            nickname: '平台管理员',
+            roles: JSON.stringify(['admin']),
+          },
+        });
+      }
+      return this.generateToken(admin.id, admin.phone);
+    }
+    throw new UnauthorizedException('用户名或密码错误');
+  }
+
   private generateToken(userId: number, phone: string) {
     const payload = { sub: userId, phone };
     return {

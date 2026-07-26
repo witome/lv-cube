@@ -22,6 +22,12 @@ export class AuthController {
     return this.authService.login(dto);
   }
 
+  @Post('admin-login')
+  @ApiOperation({ summary: '管理员登录' })
+  adminLogin(@Body('username') username: string, @Body('password') password: string) {
+    return this.authService.adminLogin(username, password);
+  }
+
   @Get('profile')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()

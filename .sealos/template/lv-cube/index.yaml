@@ -1,0 +1,506 @@
+apiVersion: app.sealos.io/v1
+kind: Template
+metadata:
+  name: lv-cube
+spec:
+  title: '绿立方农批交易平台'
+  categories:
+    - backend
+    - frontend
+  description: '绿立方农批交易小程序平台 - 买家、供应商、司机三端交易闭环'
+  locale: zh
+  i18n:
+    zh:
+      description: '绿立方农批交易小程序平台 - 买家、供应商、司机三端交易闭环'
+  defaults:
+    app_name:
+      type: string
+      value: lv-cube-${{ random(6) }}
+    app_host:
+      type: string
+      value: lv-cube-${{ random(6) }}
+    miniapp_host:
+      type: string
+      value: lv-cube-h5-${{ random(6) }}
+    admin_host:
+      type: string
+      value: lv-cube-admin-${{ random(6) }}
+    jwt_secret:
+      type: string
+      value: ${{ random(32) }}
+    db_password:
+      type: string
+      value: ${{ random(16) }}
+    redis_password:
+      type: string
+      value: ${{ random(16) }}
+  inputs:
+    admin_username:
+      description: '运营后台管理员账号'
+      type: string
+      default: 'admin'
+      required: true
+    admin_password:
+      description: '运营后台管理员密码'
+      type: string
+      default: '123456'
+      required: true
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ${{ defaults.app_name }}-mysql
+  labels:
+    sealos-db-provider-cr: ${{ defaults.app_name }}-mysql
+    app.kubernetes.io/instance: ${{ defaults.app_name }}-mysql
+    app.kubernetes.io/managed-by: kbcli
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ${{ defaults.app_name }}-mysql
+  labels:
+    sealos-db-provider-cr: ${{ defaults.app_name }}-mysql
+    app.kubernetes.io/instance: ${{ defaults.app_name }}-mysql
+    app.kubernetes.io/managed-by: kbcli
+rules:
+  - apiGroups: ['*']
+    resources: ['*']
+    verbs: ['*']
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ${{ defaults.app_name }}-mysql
+  labels:
+    sealos-db-provider-cr: ${{ defaults.app_name }}-mysql
+    app.kubernetes.io/instance: ${{ defaults.app_name }}-mysql
+    app.kubernetes.io/managed-by: kbcli
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ${{ defaults.app_name }}-mysql
+subjects:
+  - kind: ServiceAccount
+    name: ${{ defaults.app_name }}-mysql
+---
+apiVersion: apps.kubeblocks.io/v1alpha1
+kind: Cluster
+metadata:
+  name: ${{ defaults.app_name }}-mysql
+  labels:
+    sealos-db-provider-cr: ${{ defaults.app_name }}-mysql
+    app.kubernetes.io/instance: ${{ defaults.app_name }}-mysql
+    kb.io/database: apecloud-mysql-8.0.30
+    clusterdefinition.kubeblocks.io/name: apecloud-mysql
+spec:
+  clusterDefinitionRef: apecloud-mysql
+  clusterVersionRef: apecloud-mysql-8.0.30
+  terminationPolicy: Delete
+  affinity:
+    podAntiAffinity: Preferred
+    topologyKeys:
+      - kubernetes.io/hostname
+    tenancy: SharedNode
+  tolerations:
+    - key: svc
+      operator: Equal
+      effect: NoSchedule
+  componentSpecs:
+    - name: mysql
+      componentDefRef: mysql
+      replicas: 1
+      serviceAccountName: ${{ defaults.app_name }}-mysql
+      resources:
+        limits:
+          cpu: '500m'
+          memory: 512Mi
+        requests:
+          cpu: '50m'
+          memory: 51Mi
+      volumeClaimTemplates:
+        - name: data
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 10Gi
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ${{ defaults.app_name }}-redis
+  labels:
+    sealos-db-provider-cr: ${{ defaults.app_name }}-redis
+    app.kubernetes.io/instance: ${{ defaults.app_name }}-redis
+    app.kubernetes.io/managed-by: kbcli
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ${{ defaults.app_name }}-redis
+  labels:
+    sealos-db-provider-cr: ${{ defaults.app_name }}-redis
+    app.kubernetes.io/instance: ${{ defaults.app_name }}-redis
+    app.kubernetes.io/managed-by: kbcli
+rules:
+  - apiGroups: ['*']
+    resources: ['*']
+    verbs: ['*']
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ${{ defaults.app_name }}-redis
+  labels:
+    sealos-db-provider-cr: ${{ defaults.app_name }}-redis
+    app.kubernetes.io/instance: ${{ defaults.app_name }}-redis
+    app.kubernetes.io/managed-by: kbcli
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ${{ defaults.app_name }}-redis
+subjects:
+  - kind: ServiceAccount
+    name: ${{ defaults.app_name }}-redis
+---
+apiVersion: apps.kubeblocks.io/v1alpha1
+kind: Cluster
+metadata:
+  name: ${{ defaults.app_name }}-redis
+  labels:
+    sealos-db-provider-cr: ${{ defaults.app_name }}-redis
+    app.kubernetes.io/instance: ${{ defaults.app_name }}-redis
+    kb.io/database: redis-7.2.7
+    clusterdefinition.kubeblocks.io/name: redis
+spec:
+  clusterDefinitionRef: redis
+  clusterVersionRef: redis-7.2.7
+  terminationPolicy: Delete
+  affinity:
+    podAntiAffinity: Preferred
+    topologyKeys:
+      - kubernetes.io/hostname
+    tenancy: SharedNode
+  tolerations:
+    - key: svc
+      operator: Equal
+      effect: NoSchedule
+  componentSpecs:
+    - name: redis
+      componentDefRef: redis
+      replicas: 1
+      serviceAccountName: ${{ defaults.app_name }}-redis
+      resources:
+        limits:
+          cpu: '200m'
+          memory: 256Mi
+        requests:
+          cpu: '20m'
+          memory: 25Mi
+      volumeClaimTemplates:
+        - name: data
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${{ defaults.app_name }}-server
+  labels:
+    app: ${{ defaults.app_name }}-server
+    cloud.sealos.io/app-deploy-manager: ${{ defaults.app_name }}-server
+  annotations:
+    originImageName: ghcr.io/witome/lv-cube-server:latest
+    deploy.cloud.sealos.io/minReplicas: '1'
+    deploy.cloud.sealos.io/maxReplicas: '2'
+spec:
+  revisionHistoryLimit: 1
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ${{ defaults.app_name }}-server
+  template:
+    metadata:
+      labels:
+        app: ${{ defaults.app_name }}-server
+    spec:
+      automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: ${{ defaults.app_name }}-server
+      containers:
+        - name: ${{ defaults.app_name }}-server
+          image: ghcr.io/witome/lv-cube-server:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: PORT
+              value: '3000'
+            - name: JWT_SECRET
+              value: ${{ defaults.jwt_secret }}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: ${{ defaults.app_name }}-mysql-conn-credential
+                  key: endpoint
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: ${{ defaults.app_name }}-mysql-conn-credential
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ${{ defaults.app_name }}-mysql-conn-credential
+                  key: password
+            - name: REDIS_HOST
+              value: ${{ defaults.app_name }}-redis-redis-redis.${{ SEALOS_NAMESPACE }}.svc.cluster.local
+            - name: REDIS_PORT
+              value: '6379'
+            - name: ADMIN_USERNAME
+              value: ${{ inputs.admin_username }}
+            - name: ADMIN_PASSWORD
+              value: ${{ inputs.admin_password }}
+          resources:
+            requests:
+              cpu: 50m
+              memory: 51Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${{ defaults.app_name }}-server
+  labels:
+    app: ${{ defaults.app_name }}-server
+    cloud.sealos.io/app-deploy-manager: ${{ defaults.app_name }}-server
+spec:
+  selector:
+    app: ${{ defaults.app_name }}-server
+  ports:
+    - port: 3000
+      targetPort: 3000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${{ defaults.app_name }}-miniapp
+  labels:
+    app: ${{ defaults.app_name }}-miniapp
+    cloud.sealos.io/app-deploy-manager: ${{ defaults.app_name }}-miniapp
+  annotations:
+    originImageName: ghcr.io/witome/lv-cube-miniapp:latest
+    deploy.cloud.sealos.io/minReplicas: '1'
+    deploy.cloud.sealos.io/maxReplicas: '2'
+spec:
+  revisionHistoryLimit: 1
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ${{ defaults.app_name }}-miniapp
+  template:
+    metadata:
+      labels:
+        app: ${{ defaults.app_name }}-miniapp
+    spec:
+      automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: ${{ defaults.app_name }}-miniapp
+      containers:
+        - name: ${{ defaults.app_name }}-miniapp
+          image: ghcr.io/witome/lv-cube-miniapp:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          env:
+            - name: API_BASE_URL
+              value: http://${{ defaults.app_name }}-server.${{ SEALOS_NAMESPACE }}.svc.cluster.local:3000
+          resources:
+            requests:
+              cpu: 20m
+              memory: 25Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${{ defaults.app_name }}-miniapp
+  labels:
+    app: ${{ defaults.app_name }}-miniapp
+    cloud.sealos.io/app-deploy-manager: ${{ defaults.app_name }}-miniapp
+spec:
+  selector:
+    app: ${{ defaults.app_name }}-miniapp
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${{ defaults.app_name }}-admin
+  labels:
+    app: ${{ defaults.app_name }}-admin
+    cloud.sealos.io/app-deploy-manager: ${{ defaults.app_name }}-admin
+  annotations:
+    originImageName: ghcr.io/witome/lv-cube-admin:latest
+    deploy.cloud.sealos.io/minReplicas: '1'
+    deploy.cloud.sealos.io/maxReplicas: '2'
+spec:
+  revisionHistoryLimit: 1
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ${{ defaults.app_name }}-admin
+  template:
+    metadata:
+      labels:
+        app: ${{ defaults.app_name }}-admin
+    spec:
+      automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: ${{ defaults.app_name }}-admin
+      containers:
+        - name: ${{ defaults.app_name }}-admin
+          image: ghcr.io/witome/lv-cube-admin:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          env:
+            - name: API_BASE_URL
+              value: http://${{ defaults.app_name }}-server.${{ SEALOS_NAMESPACE }}.svc.cluster.local:3000
+          resources:
+            requests:
+              cpu: 20m
+              memory: 25Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${{ defaults.app_name }}-admin
+  labels:
+    app: ${{ defaults.app_name }}-admin
+    cloud.sealos.io/app-deploy-manager: ${{ defaults.app_name }}-admin
+spec:
+  selector:
+    app: ${{ defaults.app_name }}-admin
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ${{ defaults.app_name }}-miniapp
+  labels:
+    app: ${{ defaults.app_name }}-miniapp
+    cloud.sealos.io/app-deploy-manager: ${{ defaults.app_name }}-miniapp
+    cloud.sealos.io/app-deploy-manager-domain: ${{ defaults.miniapp_host }}
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-body-size: 32m
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    nginx.ingress.kubernetes.io/proxy-send-timeout: '300'
+    nginx.ingress.kubernetes.io/proxy-read-timeout: '300'
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      if ($request_uri ~* \.(js|css|gif|jpe?g|png)) {
+        expires 30d;
+        add_header Cache-Control "public";
+      }
+spec:
+  rules:
+    - host: ${{ defaults.miniapp_host }}.${{ SEALOS_CLOUD_DOMAIN }}
+      http:
+        paths:
+          - pathType: Prefix
+            path: /
+            backend:
+              service:
+                name: ${{ defaults.app_name }}-miniapp
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - ${{ defaults.miniapp_host }}.${{ SEALOS_CLOUD_DOMAIN }}
+      secretName: ${{ SEALOS_CERT_SECRET_NAME }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ${{ defaults.app_name }}-admin
+  labels:
+    app: ${{ defaults.app_name }}-admin
+    cloud.sealos.io/app-deploy-manager: ${{ defaults.app_name }}-admin
+    cloud.sealos.io/app-deploy-manager-domain: ${{ defaults.admin_host }}
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-body-size: 32m
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    nginx.ingress.kubernetes.io/proxy-send-timeout: '300'
+    nginx.ingress.kubernetes.io/proxy-read-timeout: '300'
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      if ($request_uri ~* \.(js|css|gif|jpe?g|png)) {
+        expires 30d;
+        add_header Cache-Control "public";
+      }
+spec:
+  rules:
+    - host: ${{ defaults.admin_host }}.${{ SEALOS_CLOUD_DOMAIN }}
+      http:
+        paths:
+          - pathType: Prefix
+            path: /
+            backend:
+              service:
+                name: ${{ defaults.app_name }}-admin
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - ${{ defaults.admin_host }}.${{ SEALOS_CLOUD_DOMAIN }}
+      secretName: ${{ SEALOS_CERT_SECRET_NAME }}
+---
+apiVersion: app.sealos.io/v1
+kind: App
+metadata:
+  name: ${{ defaults.app_name }}-miniapp
+  labels:
+    cloud.sealos.io/app-deploy-manager: ${{ defaults.app_name }}-miniapp
+spec:
+  data:
+    url: https://${{ defaults.miniapp_host }}.${{ SEALOS_CLOUD_DOMAIN }}
+  displayType: normal
+  icon: data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%232e7d32' width='100' height='100' rx='20'/%3E%3Ctext x='50' y='68' font-family='Arial' font-size='50' fill='white' text-anchor='middle' font-weight='bold'%3E%E7%BB%BF%3C/text%3E%3C/svg%3E
+  name: 绿立方小程序H5
+  type: link
+---
+apiVersion: app.sealos.io/v1
+kind: App
+metadata:
+  name: ${{ defaults.app_name }}-admin
+  labels:
+    cloud.sealos.io/app-deploy-manager: ${{ defaults.app_name }}-admin
+spec:
+  data:
+    url: https://${{ defaults.admin_host }}.${{ SEALOS_CLOUD_DOMAIN }}
+  displayType: normal
+  icon: data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%231565c0' width='100' height='100' rx='20'/%3E%3Ctext x='50' y='68' font-family='Arial' font-size='50' fill='white' text-anchor='middle' font-weight='bold'%3E%E7%AE%A1%3C/text%3E%3C/svg%3E
+  name: 绿立方运营后台
+  type: link
