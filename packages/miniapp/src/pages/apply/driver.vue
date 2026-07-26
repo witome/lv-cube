@@ -96,7 +96,7 @@ async function handleSubmit() {
     });
     submitted.value = true;
   } catch (e: any) {
-    uni.showToast({ title: e?.message || '提交失败，请稍后重试', icon: 'none' });
+    console.error('司机申请提交失败', e);
   } finally {
     loading.value = false;
   }
