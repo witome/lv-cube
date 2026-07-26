@@ -7,7 +7,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
-      '@lv-cube/shared': path.resolve(__dirname, '../shared/src'),
+      '@lv-cube/shared': path.resolve(__dirname, '../shared/src/index.ts'),
     },
   },
   server: {

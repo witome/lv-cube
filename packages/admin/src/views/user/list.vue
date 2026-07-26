@@ -99,7 +99,7 @@
     <el-dialog v-model="createDialogVisible" title="添加用户" width="400px">
       <el-form :model="createForm" label-width="80px">
         <el-form-item label="手机号" required>
-          <el-input v-model="createForm.phone" placeholder="请输入手机号" />
+          <el-input v-model="createForm.phone" maxlength="11" placeholder="请输入11位手机号" />
         </el-form-item>
         <el-form-item label="昵称" required>
           <el-input v-model="createForm.nickname" placeholder="请输入昵称" />
@@ -134,6 +134,7 @@ import {
   deleteUser,
   createUser,
 } from '@/api/user';
+import { isChinaMobile } from '@lv-cube/shared';
 
 const loading = ref(false);
 const tableData = ref<any[]>([]);
@@ -276,6 +277,10 @@ function openCreateDialog() {
 async function handleCreateUser() {
   if (!createForm.phone || !createForm.nickname) {
     ElMessage.warning('请填写手机号和昵称');
+    return;
+  }
+  if (!isChinaMobile(createForm.phone)) {
+    ElMessage.warning('请输入11位中国大陆手机号');
     return;
   }
   try {

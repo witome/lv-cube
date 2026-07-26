@@ -1,4 +1,5 @@
-import { IsNotEmpty, IsString, IsBoolean, IsOptional, IsNumber } from 'class-validator';
+import { IsNotEmpty, IsString, IsBoolean, IsOptional, IsNumber, Matches } from 'class-validator';
+import { CHINA_MOBILE_PATTERN } from '@lv-cube/shared';
 
 export class CreateAddressDto {
   @IsNotEmpty()
@@ -11,6 +12,7 @@ export class CreateAddressDto {
 
   @IsNotEmpty()
   @IsString()
+  @Matches(CHINA_MOBILE_PATTERN, { message: '手机号必须为11位中国大陆手机号' })
   phone: string;
 
   @IsNotEmpty()

@@ -17,7 +17,7 @@
     "noFallthroughCasesInSwitch": true,
     "paths": {
       "@/*": ["./src/*"],
-      "@lv-cube/shared": ["../shared/src"]
+      "@lv-cube/shared": ["../shared/src/index.ts"]
     },
     "types": ["node"]
   },

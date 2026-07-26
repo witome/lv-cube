@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ApplySupplierDto } from './dto/apply-supplier.dto';
 import { ApplyDriverDto } from './dto/apply-driver.dto';
 import { ReviewDto } from './dto/review.dto';
+import { isChinaMobile } from '@lv-cube/shared';
 
 @Injectable()
 export class UserService {
@@ -67,24 +68,42 @@ export class UserService {
   }
 
   async reviewSupplier(profileId: number, dto: ReviewDto) {
-    return this.prisma.supplierProfile.update({
-      where: { id: profileId },
-      data: {
-        auditStatus: dto.approved ? 'approved' : 'rejected',
-        auditRemark: dto.remark,
-        auditAt: new Date(),
-      },
-    });
+    return this.reviewRole('supplier', profileId, dto);
   }
 
   async reviewDriver(profileId: number, dto: ReviewDto) {
-    return this.prisma.driverProfile.update({
-      where: { id: profileId },
-      data: {
-        auditStatus: dto.approved ? 'approved' : 'rejected',
-        auditRemark: dto.remark,
-        auditAt: new Date(),
-      },
+    return this.reviewRole('driver', profileId, dto);
+  }
+
+  private async reviewRole(role: 'supplier' | 'driver', profileId: number, dto: ReviewDto) {
+    return this.prisma.$transaction(async (prisma) => {
+      const profileClient = role === 'supplier' ? prisma.supplierProfile : prisma.driverProfile;
+      const profile = await profileClient.findUnique({ where: { id: profileId } });
+      if (!profile) throw new BadRequestException('申请记录不存在');
+
+      const reviewed = await profileClient.update({
+        where: { id: profileId },
+        data: {
+          auditStatus: dto.approved ? 'approved' : 'rejected',
+          auditRemark: dto.remark,
+          auditAt: new Date(),
+        },
+      });
+
+      if (dto.approved) {
+        const user = await prisma.user.findUnique({ where: { id: profile.userId } });
+        if (!user) throw new BadRequestException('用户不存在');
+        const roles: string[] = JSON.parse(user.roles || '["buyer"]');
+        if (!roles.includes(role)) {
+          roles.push(role);
+          await prisma.user.update({
+            where: { id: profile.userId },
+            data: { roles: JSON.stringify(roles) },
+          });
+        }
+      }
+
+      return reviewed;
     });
   }
 
@@ -151,6 +170,7 @@ export class UserService {
   async createUser(dto: any) {
     const { phone, nickname, password, roles } = dto;
     if (!phone || !nickname) throw new BadRequestException('手机号和昵称必填');
+    if (!isChinaMobile(phone)) throw new BadRequestException('手机号必须为11位中国大陆手机号');
     const existing = await this.prisma.user.findUnique({ where: { phone } });
     if (existing) throw new BadRequestException('手机号已存在');
     const userRoles = roles?.length ? roles : ['buyer'];

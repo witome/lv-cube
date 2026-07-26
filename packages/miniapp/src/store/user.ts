@@ -32,8 +32,12 @@ export const useUserStore = defineStore('user', () => {
     try {
       const user = await getProfile();
       userInfo.value = user;
-      if (user.roles && user.roles.length > 0) {
-        currentRole.value = user.roles[0];
+      const roles = Array.isArray(user.roles)
+        ? user.roles
+        : JSON.parse(user.roles || '["buyer"]');
+      userInfo.value = { ...user, roles };
+      if (!roles.includes(currentRole.value)) {
+        currentRole.value = roles[0] || 'buyer';
       }
       return user;
     } catch (e) {
@@ -45,6 +49,7 @@ export const useUserStore = defineStore('user', () => {
     token.value = null;
     userInfo.value = null;
     uni.removeStorageSync('token');
+    currentRole.value = 'buyer';
   }
 
   function switchRole(role: string) {

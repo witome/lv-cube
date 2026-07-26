@@ -13,7 +13,7 @@
     "skipLibCheck": true,
     "noEmit": true,
     "paths": {
-      "@lv-cube/shared": ["../shared/src"],
+      "@lv-cube/shared": ["../shared/src/index.ts"],
       "@/*": ["./src/*"]
     },
     "types": ["@dcloudio/types", "@types/node"]

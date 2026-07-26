@@ -105,7 +105,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import { useUserStore } from '@/store/user';
 import { switchRole as apiSwitchRole } from '@/api/user';
@@ -114,11 +114,15 @@ import { getUnreadCount } from '@/api/message';
 const userStore = useUserStore();
 const unreadCount = ref(0);
 
-const roles = [
+const allRoles = [
   { value: 'buyer', label: '采购商', icon: '🛒' },
   { value: 'supplier', label: '供应商', icon: '🏪' },
   { value: 'driver', label: '司机', icon: '🚚' },
 ];
+const roles = computed(() => {
+  const grantedRoles = userStore.userInfo?.roles || ['buyer'];
+  return allRoles.filter((role) => grantedRoles.includes(role.value));
+});
 
 function goLogin() {
   uni.navigateTo({ url: '/pages/login/index' });
@@ -145,9 +149,10 @@ async function handleSwitchRole(role: string) {
   try {
     await apiSwitchRole(role);
     userStore.switchRole(role);
+    await userStore.fetchProfile();
     uni.showToast({ title: '角色切换成功', icon: 'success' });
   } catch (e) {
-    userStore.switchRole(role);
+    console.error('角色切换失败', e);
   }
 }
 
@@ -209,6 +214,7 @@ onMounted(() => {
 });
 
 onShow(() => {
+  userStore.fetchProfile();
   loadUnreadCount();
 });
 </script>

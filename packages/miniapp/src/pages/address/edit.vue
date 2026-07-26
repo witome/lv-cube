@@ -22,22 +22,17 @@
         <text class="input-label">手机号 <text class="required">*</text></text>
         <input
           v-model="form.phone"
-          class="input" type="number" placeholder="请输入手机号" />
+          class="input" type="number" maxlength="11" placeholder="请输入11位手机号" />
       </view>
 
       <view class="input-item">
         <text class="input-label">所在地区 <text class="required">*</text></text>
-        <view class="region-inputs">
-          <input
-            v-model="form.province"
-            class="region-input" type="text" placeholder="省" />
-          <input
-            v-model="form.city"
-            class="region-input" type="text" placeholder="市" />
-          <input
-            v-model="form.district"
-            class="region-input" type="text" placeholder="区/县" />
-        </view>
+        <picker mode="region" :value="regionValue" @change="handleRegionChange">
+          <view class="region-picker" :class="{ placeholder: !regionText }">
+            <text>{{ regionText || '请选择省/市/区' }}</text>
+            <text class="region-arrow">›</text>
+          </view>
+        </picker>
       </view>
 
       <view class="input-item">
@@ -67,8 +62,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted } from 'vue';
 import { createAddress, updateAddress, deleteAddress } from '@/api/address';
+import { isChinaMobile } from '@lv-cube/shared';
 
 const loading = ref(false);
 const isEdit = ref(false);
@@ -83,6 +79,8 @@ const form = reactive({
   detail: '',
   isDefault: false,
 });
+const regionValue = computed(() => [form.province, form.city, form.district]);
+const regionText = computed(() => regionValue.value.filter(Boolean).join(' '));
 
 function goBack() {
   uni.navigateBack();
@@ -90,6 +88,13 @@ function goBack() {
 
 function handleSwitchChange(e: any) {
   form.isDefault = e.detail.value;
+}
+
+function handleRegionChange(e: any) {
+  const [province = '', city = '', district = ''] = e.detail.value || [];
+  form.province = province;
+  form.city = city;
+  form.district = district;
 }
 
 function validateForm() {
@@ -101,8 +106,8 @@ function validateForm() {
     uni.showToast({ title: '请输入手机号', icon: 'none' });
     return false;
   }
-  if (!/^1\d{10}$/.test(form.phone)) {
-    uni.showToast({ title: '请输入正确的手机号', icon: 'none' });
+  if (!isChinaMobile(form.phone)) {
+    uni.showToast({ title: '请输入11位中国大陆手机号', icon: 'none' });
     return false;
   }
   if (!form.province.trim() || !form.city.trim() || !form.district.trim()) {
@@ -122,6 +127,7 @@ async function handleSave() {
   loading.value = true;
   try {
     const data = {
+      type: 'shipping',
       name: form.name,
       phone: form.phone,
       province: form.province,
@@ -143,10 +149,7 @@ async function handleSave() {
       uni.navigateBack();
     }, 500);
   } catch (e) {
-    uni.showToast({ title: '保存成功', icon: 'success' });
-    setTimeout(() => {
-      uni.navigateBack();
-    }, 500);
+    console.error('保存地址失败', e);
   } finally {
     loading.value = false;
   }
@@ -290,13 +293,7 @@ onMounted(() => {
   }
 }
 
-.region-inputs {
-  display: flex;
-  gap: 16rpx;
-}
-
-.region-input {
-  flex: 1;
+.region-picker {
   height: 80rpx;
   padding: 0 16rpx;
   border: 1rpx solid #e0e0e0;
@@ -304,11 +301,18 @@ onMounted(() => {
   font-size: 28rpx;
   box-sizing: border-box;
   background: #fafafa;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 
-  &:focus {
-    border-color: #2e7d32;
-    background: #fff;
+  &.placeholder {
+    color: #999;
   }
+}
+
+.region-arrow {
+  color: #999;
+  font-size: 40rpx;
 }
 
 .textarea {

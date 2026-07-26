@@ -1,7 +1,8 @@
-import { IsPhoneNumber, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, Matches } from 'class-validator';
+import { CHINA_MOBILE_PATTERN } from '@lv-cube/shared';
 
 export class RegisterDto {
-  @IsPhoneNumber('CN')
+  @Matches(CHINA_MOBILE_PATTERN, { message: '手机号必须为11位中国大陆手机号' })
   phone: string;
 
   @IsNotEmpty()

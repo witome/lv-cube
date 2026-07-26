@@ -2,7 +2,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 interface RequestOptions {
   url: string;
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   data?: any;
   header?: Record<string, string>;
 }
@@ -13,7 +13,7 @@ export function request<T = any>(options: RequestOptions): Promise<T> {
 
     uni.request({
       url: `${BASE_URL}${options.url}`,
-      method: options.method || 'GET',
+      method: (options.method || 'GET') as any,
       data: options.data,
       header: {
         'Content-Type': 'application/json',
@@ -34,7 +34,12 @@ export function request<T = any>(options: RequestOptions): Promise<T> {
           uni.reLaunch({ url: '/pages/index/index' });
           reject(new Error('未授权'));
         } else {
-          reject(new Error(`HTTP ${res.statusCode}`));
+          const rawMessage = res.data?.message;
+          const message = Array.isArray(rawMessage)
+            ? rawMessage.join('；')
+            : rawMessage || `请求失败（${res.statusCode}）`;
+          uni.showToast({ title: message, icon: 'none' });
+          reject(new Error(message));
         }
       },
       fail: (err) => {

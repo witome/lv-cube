@@ -216,8 +216,12 @@
       <view v-if="currentStep < steps.length - 1" class="footer-btn next" @click="nextStep">
         下一步
       </view>
-      <view v-if="currentStep === steps.length - 1" class="footer-btn submit" @click="handleSubmit">
-        提交保存
+      <view
+        v-if="currentStep === steps.length - 1"
+        class="footer-btn submit"
+        :class="{ disabled: submitting }"
+        @click="handleSubmit">
+        {{ submitting ? '提交中...' : '提交保存' }}
       </view>
     </view>
   </view>
@@ -244,6 +248,7 @@ const selectedLevel1 = ref<number | null>(null);
 const selectedLevel2 = ref<number | null>(null);
 const selectedLevel3 = ref<number | null>(null);
 const uploading = ref(false);
+const submitting = ref(false);
 
 const formData = reactive({
   categoryId: 0,
@@ -258,22 +263,22 @@ const formData = reactive({
 });
 
 const level2List = computed(() => {
-  const cat = categoryTree.value.find((c) => c.id === selectedLevel1.value);
+  const cat = categoryTree.value.find((c: any) => c.id === selectedLevel1.value);
   return cat?.children || [];
 });
 
 const level3List = computed(() => {
-  const l2 = level2List.value.find((c) => c.id === selectedLevel2.value);
+  const l2 = level2List.value.find((c: any) => c.id === selectedLevel2.value);
   return l2?.children || [];
 });
 
 const selectedCategoryPath = computed(() => {
   const path: any[] = [];
-  const l1 = categoryTree.value.find((c) => c.id === selectedLevel1.value);
+  const l1 = categoryTree.value.find((c: any) => c.id === selectedLevel1.value);
   if (l1) path.push(l1);
-  const l2 = level2List.value.find((c) => c.id === selectedLevel2.value);
+  const l2 = level2List.value.find((c: any) => c.id === selectedLevel2.value);
   if (l2) path.push(l2);
-  const l3 = level3List.value.find((c) => c.id === selectedLevel3.value);
+  const l3 = level3List.value.find((c: any) => c.id === selectedLevel3.value);
   if (l3) path.push(l3);
   return path;
 });
@@ -463,7 +468,8 @@ function nextStep() {
 }
 
 async function handleSubmit() {
-  if (!validateStep()) return;
+  if (submitting.value || !validateStep()) return;
+  submitting.value = true;
   try {
     const skus = formData.skus.map((sku: any) => ({
       skuName: sku.skuName,
@@ -494,6 +500,10 @@ async function handleSubmit() {
     }, 1500);
   } catch (e) {
     console.error('提交失败', e);
+    const message = e instanceof Error ? e.message : '保存失败，请稍后重试';
+    uni.showToast({ title: message, icon: 'none' });
+  } finally {
+    submitting.value = false;
   }
 }
 </script>

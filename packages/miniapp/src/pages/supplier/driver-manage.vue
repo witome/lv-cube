@@ -58,7 +58,8 @@
             class="form-input"
             v-model="addForm.phone"
             type="number"
-            placeholder="请输入手机号" />
+            maxlength="11"
+            placeholder="请输入11位手机号" />
         </view>
         <view class="modal-actions">
           <view class="modal-btn cancel" @click="closeAddModal">取消</view>
@@ -72,6 +73,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { getOwnDrivers, addOwnDriver, removeOwnDriver } from '@/api/delivery';
+import { isChinaMobile } from '@lv-cube/shared';
 
 const drivers = ref<any[]>([]);
 const loading = ref(false);
@@ -119,8 +121,8 @@ async function handleAdd() {
     uni.showToast({ title: '请输入手机号', icon: 'none' });
     return;
   }
-  if (!/^1\d{10}$/.test(addForm.value.phone)) {
-    uni.showToast({ title: '手机号格式不正确', icon: 'none' });
+  if (!isChinaMobile(addForm.value.phone)) {
+    uni.showToast({ title: '请输入11位中国大陆手机号', icon: 'none' });
     return;
   }
   try {

@@ -24,7 +24,7 @@
         <view class="input-item">
           <text class="input-label">手机号</text>
           <input
-            v-model="form.phone" class="input" type="number" placeholder="请输入手机号" />
+            v-model="form.phone" class="input" type="number" maxlength="11" placeholder="请输入11位手机号" />
         </view>
         <view class="input-item">
           <text class="input-label">密码</text>
@@ -49,6 +49,7 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
 import { useUserStore } from '@/store/user';
+import { isChinaMobile } from '@lv-cube/shared';
 
 const userStore = useUserStore();
 
@@ -64,6 +65,10 @@ const form = reactive({
 async function handleSubmit() {
   if (!form.phone || !form.password) {
     uni.showToast({ title: '请填写手机号和密码', icon: 'none' });
+    return;
+  }
+  if (!isChinaMobile(form.phone)) {
+    uni.showToast({ title: '请输入11位中国大陆手机号', icon: 'none' });
     return;
   }
 

@@ -1,5 +1,6 @@
 import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { isChinaMobile } from '@lv-cube/shared';
 
 @Injectable()
 export class DeliveryService {
@@ -138,6 +139,10 @@ export class DeliveryService {
   }
 
   async addOwnDriver(supplierId: number, data: any) {
+    if (!data?.name?.trim()) throw new BadRequestException('司机姓名必填');
+    if (!isChinaMobile(data?.phone || '')) {
+      throw new BadRequestException('手机号必须为11位中国大陆手机号');
+    }
     return this.prisma.ownedDriver.create({ data: { supplierId, ...data } });
   }
 

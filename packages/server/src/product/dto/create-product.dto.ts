@@ -1,4 +1,4 @@
-import { IsString, IsInt, IsOptional, IsArray, IsNumber, IsEnum, ValidateNested } from 'class-validator';
+import { IsString, IsInt, IsOptional, IsArray, IsNumber, IsEnum, IsObject, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class SkuDto {
@@ -43,7 +43,7 @@ export class CreateProductDto {
   description?: string;
 
   @IsOptional()
-  @IsArray()
+  @IsObject()
   attrValues?: Record<string, any>;
 
   @IsArray()
