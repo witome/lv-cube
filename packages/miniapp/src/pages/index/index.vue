@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed, watch } from 'vue';
 import { useUserStore } from '@/store/user';
 
 const userStore = useUserStore();
@@ -36,12 +36,21 @@ const roleLabel = computed(() => {
   return map[userStore.currentRole] || '采购商';
 });
 
-onMounted(async () => {
-  console.log('首页加载完成');
+async function checkLogin() {
   if (userStore.isLoggedIn && !userStore.userInfo) {
     await userStore.fetchProfile();
   }
-});
+}
+
+watch(
+  () => userStore.isLoggedIn,
+  (loggedIn) => {
+    if (loggedIn) {
+      checkLogin();
+    }
+  },
+  { immediate: true }
+);
 
 function goLogin() {
   uni.navigateTo({ url: '/pages/login/index' });
