@@ -194,7 +194,27 @@ export class OrderService {
     if (!profile) throw new BadRequestException('供应商档案不存在');
     if (!order || order.supplierId !== profile.id) throw new ForbiddenException('无权操作');
     if (order.status !== 'pending_accept') throw new BadRequestException('订单状态不正确');
-    return this.prisma.order.update({ where: { id }, data: { status: 'preparing', acceptedAt: new Date() } });
+
+    const result = await this.prisma.order.update({ where: { id }, data: { status: 'preparing', acceptedAt: new Date() } });
+
+    // 接单后自动创建配送池记录
+    const existingDelivery = await this.prisma.delivery.findUnique({ where: { orderId: id } });
+    if (!existingDelivery) {
+      const addr = JSON.parse(order.addressSnapshot || '{}');
+      const deliveryAddress = `${addr.province || ''}${addr.city || ''}${addr.district || ''}${addr.detail || ''}`;
+      await this.prisma.delivery.create({
+        data: {
+          orderId: id,
+          supplierId: order.supplierId,
+          type: 'platform',
+          status: 'pending',
+          pickupAddress: '供应商仓库',
+          deliveryAddress: deliveryAddress || '未知地址',
+        },
+      });
+    }
+
+    return result;
   }
 
   async rejectOrder(userId: number, id: number, reason: string) {

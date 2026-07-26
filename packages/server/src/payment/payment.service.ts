@@ -62,27 +62,6 @@ export class PaymentService {
       where: { id: paymentId },
       data: { payStatus: 'success', paidAt: new Date() },
     });
-
-    // 支付成功后自动创建配送池记录
-    const existingDelivery = await this.prisma.delivery.findUnique({ where: { orderId } });
-    if (!existingDelivery) {
-      const order = await this.prisma.order.findUnique({ where: { id: orderId } });
-      if (order) {
-        const addr = JSON.parse(order.addressSnapshot || '{}');
-        const deliveryAddress = `${addr.province || ''}${addr.city || ''}${addr.district || ''}${addr.detail || ''}`;
-        await this.prisma.delivery.create({
-          data: {
-            orderId,
-            supplierId: order.supplierId,
-            type: 'platform',
-            status: 'pending',
-            pickupAddress: '供应商仓库',
-            deliveryAddress: deliveryAddress || '未知地址',
-          },
-        });
-      }
-    }
-
     return { paymentId, mock: true, message: '模拟支付成功' };
   }
 
