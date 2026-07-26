@@ -79,10 +79,16 @@ async function handleSubmit() {
 
   loading.value = true;
   try {
-    await applySupplier(form);
+    await applySupplier({
+      shopName: form.shopName,
+      shopDesc: form.shopIntro,
+      businessLicense: form.businessLicense,
+      foodLicense: form.foodLicense,
+    });
     submitted.value = true;
   } catch (e) {
     console.error('供应商申请提交失败', e);
+    uni.showToast({ title: '提交失败，请稍后重试', icon: 'none' });
   } finally {
     loading.value = false;
   }
