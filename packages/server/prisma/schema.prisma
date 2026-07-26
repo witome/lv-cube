@@ -50,6 +50,7 @@ model SupplierProfile {
   products          Product[]
   ownedDrivers      OwnedDriver[]
   deliveries        Delivery[]
+  supplierCategories SupplierCategory[]
 }
 
 model DriverProfile {
