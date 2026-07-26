@@ -188,7 +188,7 @@
       </view>
     </view>
 
-    <view v-else class="loading-state">
+    <view v-if="!order && !showDriverModal" class="loading-state">
       <text class="loading-text">加载中...</text>
     </view>
   </view>
