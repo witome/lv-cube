@@ -79,7 +79,8 @@ export class SettlementService {
   }
 
   async getSettlements(userId: number, role: string, params: any) {
-    const { page = 1, pageSize = 20 } = params;
+    const page = Number(params.page) || 1;
+    const pageSize = Number(params.pageSize) || 20;
     const skip = (page - 1) * pageSize;
     const where: any = {};
     if (role === 'supplier') where.supplierId = userId;
@@ -115,7 +116,8 @@ export class SettlementService {
   }
 
   async getWithdrawals(userId: number, params: any) {
-    const { page = 1, pageSize = 20 } = params;
+    const page = Number(params.page) || 1;
+    const pageSize = Number(params.pageSize) || 20;
     const skip = (page - 1) * pageSize;
     const [list, total] = await Promise.all([
       this.prisma.withdraw.findMany({ where: { userId }, skip, take: pageSize, orderBy: { createdAt: 'desc' } }),

@@ -36,7 +36,9 @@ export class ProductService {
   }
 
   async findAll(query: QueryProductDto) {
-    const { page = 1, pageSize = 20, keyword, categoryId, supplierId, status, minPrice, maxPrice, sort } = query;
+    const page = Number(query.page) || 1;
+    const pageSize = Number(query.pageSize) || 20;
+    const { keyword, categoryId, supplierId, status, minPrice, maxPrice, sort } = query;
     const skip = (page - 1) * pageSize;
 
     const where: any = {};

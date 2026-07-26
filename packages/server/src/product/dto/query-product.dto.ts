@@ -1,4 +1,5 @@
 import { IsOptional, IsString, IsNumber, IsInt, IsEnum, IsArray } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class QueryProductDto {
   @IsOptional()
@@ -6,10 +7,12 @@ export class QueryProductDto {
   keyword?: string;
 
   @IsOptional()
+  @Type(() => Number)
   @IsInt()
   categoryId?: number;
 
   @IsOptional()
+  @Type(() => Number)
   @IsInt()
   supplierId?: number;
 
@@ -18,10 +21,12 @@ export class QueryProductDto {
   status?: string;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   minPrice?: number;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   maxPrice?: number;
 
@@ -30,10 +35,12 @@ export class QueryProductDto {
   sort?: string;
 
   @IsOptional()
+  @Type(() => Number)
   @IsInt()
   page?: number;
 
   @IsOptional()
+  @Type(() => Number)
   @IsInt()
   pageSize?: number;
 }

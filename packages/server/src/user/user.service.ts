@@ -89,7 +89,9 @@ export class UserService {
   }
 
   async findAllUsers(params: { page?: number; pageSize?: number; keyword?: string; role?: string }) {
-    const { page = 1, pageSize = 20, keyword, role } = params;
+    const page = Number(params.page) || 1;
+    const pageSize = Number(params.pageSize) || 20;
+    const { keyword, role } = params;
     const skip = (page - 1) * pageSize;
     const where: any = {};
     if (keyword) where.OR = [{ phone: { contains: keyword } }, { nickname: { contains: keyword } }];

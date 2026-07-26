@@ -96,7 +96,9 @@ export class OrderService {
   }
 
   async findByBuyer(buyerId: number, query: QueryOrderDto) {
-    const { page = 1, pageSize = 20, status } = query;
+    const page = Number(query.page) || 1;
+    const pageSize = Number(query.pageSize) || 20;
+    const { status } = query;
     const skip = (page - 1) * pageSize;
     const where: any = { buyerId };
     if (status) where.status = status;
@@ -114,7 +116,9 @@ export class OrderService {
   }
 
   async findBySupplier(supplierId: number, query: QueryOrderDto) {
-    const { page = 1, pageSize = 20, status } = query;
+    const page = Number(query.page) || 1;
+    const pageSize = Number(query.pageSize) || 20;
+    const { status } = query;
     const skip = (page - 1) * pageSize;
     const where: any = { supplierId };
     if (status) where.status = status;

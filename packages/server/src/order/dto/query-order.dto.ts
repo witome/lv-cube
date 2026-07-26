@@ -1,4 +1,5 @@
 import { IsOptional, IsString, IsInt, IsEnum } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class QueryOrderDto {
   @IsOptional()
@@ -6,14 +7,17 @@ export class QueryOrderDto {
   status?: string;
 
   @IsOptional()
+  @Type(() => Number)
   @IsInt()
   supplierId?: number;
 
   @IsOptional()
+  @Type(() => Number)
   @IsInt()
   page?: number;
 
   @IsOptional()
+  @Type(() => Number)
   @IsInt()
   pageSize?: number;
 }

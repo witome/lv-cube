@@ -18,6 +18,8 @@ export class MessageService {
   }
 
   async findByUser(userId: number, page: number = 1, pageSize: number = 20) {
+    page = Number(page) || 1;
+    pageSize = Number(pageSize) || 20;
     const skip = (page - 1) * pageSize;
     const [list, total] = await Promise.all([
       this.prisma.message.findMany({
