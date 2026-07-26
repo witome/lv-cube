@@ -44,7 +44,7 @@ export class ProductController {
   @ApiBearerAuth()
   @ApiOperation({ summary: '[供应商] 上下架商品' })
   updateStatus(@Request() req: any, @Param('id') id: string, @Body('status') status: string) {
-    return this.productService.updateStatus(req.user.id, Number(id), status);
+    return this.productService.updateStatus(req.user.id, Number(id), status, req.user.roles);
   }
 
   @Delete(':id')

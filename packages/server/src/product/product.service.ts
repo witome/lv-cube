@@ -164,11 +164,14 @@ export class ProductService {
     });
   }
 
-  async updateStatus(userId: number, id: number, status: string) {
-    const supplier = await this.getApprovedSupplier(userId);
-    const product = await this.prisma.product.findUnique({ where: { id } });
-    if (!product) throw new BadRequestException('商品不存在');
-    if (product.supplierId !== supplier.id) throw new ForbiddenException('无权操作他人商品');
+  async updateStatus(userId: number, id: number, status: string, userRoles?: string[]) {
+    const isAdmin = userRoles?.includes('admin');
+    if (!isAdmin) {
+      const supplier = await this.getApprovedSupplier(userId);
+      const product = await this.prisma.product.findUnique({ where: { id } });
+      if (!product) throw new BadRequestException('商品不存在');
+      if (product.supplierId !== supplier.id) throw new ForbiddenException('无权操作他人商品');
+    }
     return this.prisma.product.update({ where: { id }, data: { status } });
   }
 
