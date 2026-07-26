@@ -8,9 +8,6 @@ spec:
             - -c
             - >
               cd /app/packages/server &&
-              if [ -d /app/data/dist ]; then
-                cp -r /app/data/dist/* /app/packages/server/dist/;
-              fi;
               pnpm prisma db push &&
               node dist/main
           resources:
