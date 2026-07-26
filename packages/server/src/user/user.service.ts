@@ -183,6 +183,10 @@ export class UserService {
     if (!user) throw new BadRequestException('用户不存在');
     if (!roles.includes('supplier') && user.supplier) {
       await this.prisma.supplierCategory.deleteMany({ where: { supplierId: user.supplier.id } });
+      await this.prisma.product.deleteMany({ where: { supplierId: user.supplier.id } });
+      await this.prisma.delivery.deleteMany({ where: { supplierId: user.supplier.id } });
+      await this.prisma.settlement.deleteMany({ where: { supplierId: user.supplier.id } });
+      await this.prisma.ownedDriver.deleteMany({ where: { supplierId: user.supplier.id } });
       await this.prisma.supplierProfile.delete({ where: { id: user.supplier.id } });
     }
     if (!roles.includes('driver') && user.driver) {
