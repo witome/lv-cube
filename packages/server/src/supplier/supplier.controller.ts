@@ -17,7 +17,7 @@ export class SupplierCategoryController {
       where: { supplierId: Number(id) },
       select: { categoryId: true },
     });
-    return { code: 0, message: 'success', data: list.map(x => x.categoryId) };
+    return list.map(x => x.categoryId);
   }
 
   @Put(':id/categories')
@@ -34,6 +34,6 @@ export class SupplierCategoryController {
         });
       }
     });
-    return { code: 0, message: 'success' };
+    return { success: true };
   }
 }
