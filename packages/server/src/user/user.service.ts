@@ -182,12 +182,10 @@ export class UserService {
     const user = await this.prisma.user.findUnique({ where: { id }, include: { supplier: true, driver: true } });
     if (!user) throw new BadRequestException('用户不存在');
     if (!roles.includes('supplier') && user.supplier) {
-      await this.prisma.supplierCategory.deleteMany({ where: { supplierId: user.supplier.id } });
-      await this.prisma.product.deleteMany({ where: { supplierId: user.supplier.id } });
-      await this.prisma.delivery.deleteMany({ where: { supplierId: user.supplier.id } });
-      await this.prisma.settlement.deleteMany({ where: { supplierId: user.supplier.id } });
-      await this.prisma.ownedDriver.deleteMany({ where: { supplierId: user.supplier.id } });
-      await this.prisma.supplierProfile.delete({ where: { id: user.supplier.id } });
+      await this.prisma.supplierProfile.update({
+        where: { id: user.supplier.id },
+        data: { auditStatus: 'rejected', auditRemark: '角色已变更，请重新申请' },
+      });
     }
     if (!roles.includes('driver') && user.driver) {
       await this.prisma.driverProfile.delete({ where: { userId: id } });
