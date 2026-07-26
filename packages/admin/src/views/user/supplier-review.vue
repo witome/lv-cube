@@ -45,20 +45,42 @@
         <el-button type="danger" @click="confirmReject">确认拒绝</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="catDialogVisible" title="设置可售分类" width="500px">
+      <p style="margin-bottom: 16px; color: #666;">为该供应商选择可销售的商品分类：</p>
+      <el-tree
+        :data="categoryTree"
+        :props="{ label: 'name', children: 'children' }"
+        show-checkbox
+        node-key="id"
+        :default-checked-keys="checkedCategories"
+        @check-change="handleCategoryChange"
+        ref="treeRef"
+      />
+      <template #footer>
+        <el-button @click="catDialogVisible = false; fetchList()">跳过</el-button>
+        <el-button type="primary" @click="confirmCategories">保存</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { ElMessage } from 'element-plus';
-import { getPendingSuppliers, reviewSupplier } from '@/api/user';
+import { getPendingSuppliers, reviewSupplier, getSupplierCategories, setSupplierCategories } from '@/api/user';
+import { getCategoryTree } from '@/api/category';
 
 const loading = ref(false);
 const tableData = ref<any[]>([]);
 const approveDialogVisible = ref(false);
 const rejectDialogVisible = ref(false);
+const catDialogVisible = ref(false);
 const currentRow = ref<any>(null);
 const rejectRemark = ref('');
+const categoryTree = ref<any[]>([]);
+const checkedCategories = ref<number[]>([]);
+const treeRef = ref<any>(null);
 
 async function fetchList() {
   loading.value = true;
@@ -68,6 +90,13 @@ async function fetchList() {
   } finally {
     loading.value = false;
   }
+}
+
+async function loadCategoryTree() {
+  try {
+    const res = await getCategoryTree();
+    categoryTree.value = res || [];
+  } catch {}
 }
 
 function handleApprove(row: any) {
@@ -80,11 +109,27 @@ async function confirmApprove() {
     await reviewSupplier(currentRow.value.id, { approved: true });
     ElMessage.success('已通过审核');
     approveDialogVisible.value = false;
-    fetchList();
+    // 弹出分类选择
+    const cats = await getSupplierCategories(currentRow.value.id);
+    checkedCategories.value = cats || [];
+    await loadCategoryTree();
+    catDialogVisible.value = true;
   } catch {
     // error handled in interceptor
   }
 }
+
+async function confirmCategories() {
+  try {
+    const checked = treeRef.value?.getCheckedKeys() || [];
+    await setSupplierCategories(currentRow.value.id, checked);
+    ElMessage.success('分类授权已保存');
+    catDialogVisible.value = false;
+    fetchList();
+  } catch {}
+}
+
+function handleCategoryChange() {}
 
 function handleReject(row: any) {
   currentRow.value = row;

@@ -35,3 +35,11 @@ export function deleteUser(id: number) {
 export function createUser(data: any) {
   return request.post('/user', data);
 }
+
+export function getSupplierCategories(id: number): Promise<number[]> {
+  return request.get(`/supplier/${id}/categories`);
+}
+
+export function setSupplierCategories(id: number, categoryIds: number[]) {
+  return request.put(`/supplier/${id}/categories`, { categoryIds });
+}

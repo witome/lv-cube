@@ -21,6 +21,12 @@ export class ProductService {
 
   async create(userId: number, dto: CreateProductDto) {
     const supplier = await this.getApprovedSupplier(userId);
+    // 验证分类授权
+    const authorized = await this.prisma.supplierCategory.findUnique({
+      where: { supplierId_categoryId: { supplierId: supplier.id, categoryId: dto.categoryId } },
+    });
+    if (!authorized) throw new BadRequestException('您未被授权在该分类下发布商品');
+
     return this.prisma.product.create({
       data: {
         supplierId: supplier.id,
