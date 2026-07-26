@@ -119,7 +119,12 @@ export class OrderService {
     return { list, total, page, pageSize };
   }
 
-  async findBySupplier(supplierId: number, query: QueryOrderDto) {
+  async findBySupplier(userId: number, query: QueryOrderDto) {
+    // 先查供应商档案 ID（User.id ≠ SupplierProfile.id）
+    const profile = await this.prisma.supplierProfile.findUnique({ where: { userId } });
+    if (!profile) throw new BadRequestException('供应商档案不存在');
+    const supplierId = profile.id;
+
     const page = Number(query.page) || 1;
     const pageSize = Number(query.pageSize) || 20;
     const { status } = query;
